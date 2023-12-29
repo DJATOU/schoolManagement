@@ -19,8 +19,4 @@ public class Teacher {
     private String email;
     private Set<Group> assignedGroups;
 
-
-
-
-
 }

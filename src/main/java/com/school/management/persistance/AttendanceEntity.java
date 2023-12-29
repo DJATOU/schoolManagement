@@ -25,9 +25,5 @@ public class AttendanceEntity extends BaseEntity {
     private SessionEntity session; // Reference to the session
 
     @Column(name = "status")
-    private Boolean isPresent; // Status of attendance: true (present), false (absent)
-
-    // Additional fields like remarks, timestamp, etc.
-
-    // Constructors, getters, setters...
+    private Boolean isPresent;
 }

@@ -22,4 +22,6 @@ public class RoomEntity extends BaseEntity {
     @Column(name = "capacity")
     private Integer capacity;
 
+
+
 }

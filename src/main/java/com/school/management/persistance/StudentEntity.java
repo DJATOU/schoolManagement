@@ -3,6 +3,9 @@ package com.school.management.persistance;
 import jakarta.persistence.*;
 import lombok.*;
 
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -16,6 +19,7 @@ import java.util.Set;
 public class StudentEntity extends PersonEntity {
 
     @Column(name = "level")
+    @NotNull
     private String level;
 
     @ManyToMany
@@ -38,6 +42,8 @@ public class StudentEntity extends PersonEntity {
     private String establishment;
 
     @Column(name = "average_score")
+    @Min(0)
+    @Max(100)
     private Double averageScore; // Optional
 
     // Additional methods as needed...

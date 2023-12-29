@@ -21,5 +21,4 @@ public class TutorEntity extends PersonEntity {
     @OneToMany(mappedBy = "tutor")
     private Set<StudentEntity> students = new HashSet<>();
 
-    // Additional fields and methods as needed...
 }

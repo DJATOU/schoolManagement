@@ -20,13 +20,10 @@ public class Student {
     private String placeOfBirth;
     private String phoneNumber;
     private String email;
-    private String tutor; // This could also be a separate Tutor class if more details are needed
+    private String tutor;
     private String level;
-    private Set<Group> groups; // Assuming a student can belong to multiple groups
+    private Set<Group> groups;
     private String establishment;
-    private Double averageScore; // Optional
+    private Double averageScore;
 
-    // Constructors, Getters, Setters
-
-    // Business methods, e.g., enroll in a group, update average score, etc.
 }

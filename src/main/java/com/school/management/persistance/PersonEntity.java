@@ -2,6 +2,8 @@ package com.school.management.persistance;
 
 import jakarta.persistence.*;
 import lombok.*;
+
+import javax.validation.constraints.Email;
 import java.util.Date;
 
 @MappedSuperclass
@@ -22,6 +24,7 @@ public abstract class PersonEntity extends BaseEntity {
     private String lastName;
 
     @Column(name = "email")
+    @Email
     private String email;
 
     @Column(name = "phone_number")

@@ -1,0 +1,35 @@
+package com.school.management.service;
+
+import com.school.management.persistance.PricingEntity;
+import com.school.management.repository.PricingRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+public class PricingService {
+
+    private final PricingRepository pricingRepository;
+
+    @Autowired
+    public PricingService(PricingRepository pricingRepository) {
+        this.pricingRepository = pricingRepository;
+    }
+
+    public List<PricingEntity> getAllPricing() {
+        return pricingRepository.findAll();
+    }
+
+    public PricingEntity createPricing(PricingEntity pricing) {
+        return pricingRepository.save(pricing);
+    }
+
+    public PricingEntity updatePricing(Long id, PricingEntity pricing) {
+        PricingEntity pricingToUpdate = pricingRepository.findById(id).orElseThrow();
+        pricingToUpdate.setPrice(pricing.getPrice());
+        return pricingRepository.save(pricingToUpdate);
+    }
+
+
+}

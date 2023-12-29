@@ -16,9 +16,7 @@ public class AdministratorEntity extends PersonEntity {
     private String username;
 
     @Column(name = "password")
-    private String password; // Consider using encryption for storing passwords
+    private String password;
 
-    // Additional attributes and relationships specific to an administrator
 
-    // Constructors, getters, setters, and other methods...
 }

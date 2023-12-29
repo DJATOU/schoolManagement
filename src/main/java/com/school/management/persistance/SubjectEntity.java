@@ -19,5 +19,4 @@ public class SubjectEntity extends BaseEntity {
     @Column(name = "name")
     private String name;
 
-    // Constructors, getters, and setters
 }

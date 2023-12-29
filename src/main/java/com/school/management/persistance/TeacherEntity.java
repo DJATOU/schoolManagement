@@ -21,5 +21,5 @@ public class TeacherEntity extends PersonEntity {
     @OneToMany(mappedBy = "teacher")
     private Set<GroupEntity> groups = new HashSet<>();
 
-    // Additional fields and methods as needed...
+
 }

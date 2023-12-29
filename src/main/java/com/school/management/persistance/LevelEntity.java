@@ -19,7 +19,5 @@ public class LevelEntity extends BaseEntity {
     @Column(name = "name")
     private String name; // "1st", "2nd", "3rd", etc.
 
-    // Other attributes specific to the level
 
-    // Standard getters and setters
 }

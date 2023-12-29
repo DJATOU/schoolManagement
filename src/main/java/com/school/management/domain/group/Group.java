@@ -13,16 +13,13 @@ import java.util.Set;
 public class Group {
 
     private Long id;
-    private String groupType; // e.g., Large, Medium, Small, Individual
-    private Long levelId; // This might reference another domain object or an enum
-    private Long subjectId; // Similar to levelId, could be a domain object or an enum
+    private String groupType;
+    private Long levelId;
+    private Long subjectId;
     private Integer packageCount;
     private Integer sessionCount;
     private Double sessionPrice;
-    private Long teacherId; // This could also be a Teacher class if you have teacher details
+    private Long teacherId;
     private Set<Student> students;
 
-    // Constructors, Getters, Setters
-
-    // Business methods, e.g., add student, calculate group price, etc.
 }
