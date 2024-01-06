@@ -1,5 +1,7 @@
 package com.school.management.service;
 
+import com.school.management.dto.AttendanceDTO;
+import com.school.management.mapper.AttendanceMapper;
 import com.school.management.persistance.AttendanceEntity;
 import com.school.management.repository.AttendanceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,14 +12,23 @@ import java.util.List;
 public class AttendanceService {
 
     private final AttendanceRepository attendanceRepository;
+    private final AttendanceMapper attendanceMapper;
 
     @Autowired
-    public AttendanceService(AttendanceRepository attendanceRepository) {
+    public AttendanceService(AttendanceRepository attendanceRepository, AttendanceMapper attendanceMapper) {
         this.attendanceRepository = attendanceRepository;
+        this.attendanceMapper = attendanceMapper;
     }
 
-    public List<AttendanceEntity> getAllAttendances() {
+    public List<AttendanceEntity> getAllAttendancesold() {
         return attendanceRepository.findAll();
+    }
+
+    public List<AttendanceDTO> getAllAttendances() {
+        List<AttendanceEntity> attendances = attendanceRepository.findAll();
+        return attendances.stream()
+                .map(attendanceMapper::attendanceToAttendanceDTO)
+                .toList();
     }
 
     public AttendanceEntity getAttendanceById(Long id) {
@@ -29,7 +40,7 @@ public class AttendanceService {
         return attendanceRepository.save(attendance);
     }
 
-    public AttendanceEntity updateAttendance(Long id, AttendanceEntity updatedAttendance) {
+    public AttendanceEntity updateAttendance(Long id) {
         AttendanceEntity existingAttendance = getAttendanceById(id);
         // Update properties of existingAttendance using values from updatedAttendance
         // ...
@@ -38,6 +49,15 @@ public class AttendanceService {
 
     public void deleteAttendance(Long id) {
         attendanceRepository.deleteById(id);
+    }
+
+    //Save attendance
+    public AttendanceEntity save(AttendanceEntity attendance) {
+        return attendanceRepository.save(attendance);
+    }
+
+    public List<AttendanceEntity> saveAll(List<AttendanceEntity> attendances) {
+        return attendanceRepository.saveAll(attendances);
     }
 
     // Additional methods as needed...

@@ -1,9 +1,12 @@
 package com.school.management.controller;
 
+import com.school.management.dto.TeacherDTO;
+import com.school.management.mapper.TeacherMapper;
 import com.school.management.persistance.TeacherEntity;
 import com.school.management.service.TeacherService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,15 +16,21 @@ import java.util.List;
 public class TeacherController {
 
     private final TeacherService teacherService;
+    private final TeacherMapper teacherMapper;
 
     @Autowired
-    public TeacherController(TeacherService teacherService) {
+    public TeacherController(TeacherService teacherService, TeacherMapper teacherMapper) {
         this.teacherService = teacherService;
+        this.teacherMapper = teacherMapper;
     }
 
+    @Transactional(readOnly = true)
     @GetMapping
-    public ResponseEntity<List<TeacherEntity>> getAllTeachers() {
-        return ResponseEntity.ok(teacherService.getAllTeachers());
+    public ResponseEntity<List<TeacherDTO>> getAllTeachers() {
+        List<TeacherDTO> teachers = teacherService.getAllTeachers().stream()
+                .map(teacherMapper::teacherToTeacherDTO)
+                .toList();
+        return ResponseEntity.ok(teachers);
     }
 
     @GetMapping("/lastname/{lastName}")

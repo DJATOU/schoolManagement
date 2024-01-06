@@ -1,9 +1,10 @@
 package com.school.management.persistance;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
-import javax.validation.constraints.Email;
 import java.util.Date;
 
 @MappedSuperclass
@@ -11,6 +12,7 @@ import java.util.Date;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@SuperBuilder
 public abstract class PersonEntity extends BaseEntity {
 
     @Id
@@ -22,6 +24,9 @@ public abstract class PersonEntity extends BaseEntity {
 
     @Column(name = "last_name")
     private String lastName;
+
+    @Column(name ="gender")
+    private String gender;
 
     @Column(name = "email")
     @Email

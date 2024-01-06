@@ -19,6 +19,9 @@ public class SessionEntity extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "title")
+    private String title;
+
     @ManyToOne
     @JoinColumn(name = "group_id")
     private GroupEntity group;

@@ -24,13 +24,24 @@ public class GroupService {
         this.groupRepository = groupRepository;
     }
 
+    public List<GroupEntity> findByTeacherId(Long teacherId) {
+        return groupRepository.findAll().stream()
+                .filter(group -> group.getTeacher() != null && group.getTeacher().getId().equals(teacherId))
+                .toList();
+    }
+
+    public List<GroupEntity> findByStudentId(Long studentId) {
+        return groupRepository.findAll().stream()
+                .filter(group -> group.getStudents().stream().anyMatch(student -> student.getId().equals(studentId)))
+                .toList();
+    }
+
     @Transactional(readOnly = true)
     public Optional<GroupEntity> findById(Long id) {
         try {
             return groupRepository.findById(id);
         } catch (DataAccessException e) {
             String errorMessage = "Error fetching group with ID " + id;
-            LOGGER.error(errorMessage, e);
             throw new CustomServiceException(errorMessage, e);
         }
     }

@@ -18,9 +18,6 @@ public class PricingEntity extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "description")
-    private String description; // A description of the price (e.g., "Standard Math Class Price")
-
     @Column(name = "price")
     private BigDecimal price;
 

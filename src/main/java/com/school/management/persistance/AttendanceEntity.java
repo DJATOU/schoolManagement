@@ -16,14 +16,22 @@ public class AttendanceEntity extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "student_id")
     private StudentEntity student; // Reference to the student
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "session_id")
     private SessionEntity session; // Reference to the session
 
     @Column(name = "status")
     private Boolean isPresent;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "session_series_id")
+    private SessionSeriesEntity sessionSeries;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "group_id")
+    private GroupEntity group;
 }

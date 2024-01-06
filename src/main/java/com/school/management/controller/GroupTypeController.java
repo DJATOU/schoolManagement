@@ -2,12 +2,11 @@ package com.school.management.controller;
 
 import com.school.management.persistance.GroupTypeEntity;
 import com.school.management.repository.GroupTypeRepository;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import javax.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -57,12 +56,13 @@ public class GroupTypeController {
 
     // Delete a group type
     @DeleteMapping("/{id}")
-    public ResponseEntity<HttpStatus> deleteGroupType(@PathVariable Long id) {
+    public ResponseEntity<?> deleteGroupType(@PathVariable Long id) {
         return groupTypeRepository.findById(id)
                 .map(groupType -> {
                     groupTypeRepository.delete(groupType);
-                    return new ResponseEntity<HttpStatus>(HttpStatus.NO_CONTENT);
+                    return ResponseEntity.noContent().build(); // Returns ResponseEntity<HttpStatus>
                 })
-                .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+                .orElse(ResponseEntity.notFound().build()); // Also returns ResponseEntity<HttpStatus>
     }
 }
+

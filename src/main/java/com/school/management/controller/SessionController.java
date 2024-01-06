@@ -1,11 +1,14 @@
 package com.school.management.controller;
 
 import com.school.management.persistance.SessionEntity;
+import com.school.management.service.PatchService;
 import com.school.management.service.SessionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/sessions")
@@ -13,9 +16,12 @@ public class SessionController {
 
     private final SessionService sessionService;
 
+    private final PatchService patchService;
+
     @Autowired
-    public SessionController(SessionService sessionService) {
+    public SessionController(SessionService sessionService, PatchService patchService) {
         this.sessionService = sessionService;
+        this.patchService = patchService;
     }
 
     @GetMapping
@@ -36,14 +42,21 @@ public class SessionController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<SessionEntity> updateSession(@PathVariable Long id, @RequestBody SessionEntity session) {
-        return ResponseEntity.ok(sessionService.updateSession(id, session));
+    public ResponseEntity<SessionEntity> updateSession(@PathVariable Long id) {
+        return ResponseEntity.ok(sessionService.updateSession(id));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteSession(@PathVariable Long id) {
         sessionService.deleteSession(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<SessionEntity> patchSession(@PathVariable Long id, @RequestBody Map<String, Object> updates) {
+        Optional<SessionEntity> session = sessionService.getSessionById(id);
+        patchService.applyPatch(session, updates);
+        return ResponseEntity.ok(sessionService.updateSession(id));
     }
 
     // Additional endpoints as needed...

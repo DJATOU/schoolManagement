@@ -2,34 +2,36 @@ package com.school.management.service;
 
 import com.school.management.persistance.GroupEntity;
 import com.school.management.persistance.StudentEntity;
-import com.school.management.repository.GroupRepository;
+import com.school.management.repository.StudentGroupRepository;
 import com.school.management.repository.StudentRepository;
 import com.school.management.service.exception.CustomServiceException;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.criteria.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
-import javax.validation.ValidationException;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
 @Service
 public class StudentService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StudentService.class);
-
+    @PersistenceContext
+    private EntityManager entityManager;
     private final StudentRepository studentRepository;
-    private final GroupRepository groupRepository;
 
     @Autowired
-    public StudentService(StudentRepository studentRepository, GroupRepository groupRepository) {
+    public StudentService(StudentRepository studentRepository) {
         this.studentRepository = studentRepository;
-        this.groupRepository = groupRepository;
     }
 
     @Transactional(readOnly = true)
@@ -37,9 +39,7 @@ public class StudentService {
         try {
             return studentRepository.findById(id);
         } catch (DataAccessException e) {
-            String errorMessage = "Error fetching student with ID " + id;
-            LOGGER.error(errorMessage, e);
-            throw new CustomServiceException(errorMessage, e);
+            throw new CustomServiceException("Error fetching student with ID " + id, e);
         }
     }
 
@@ -51,15 +51,8 @@ public class StudentService {
 
     @Transactional
     public StudentEntity save(StudentEntity student) {
-        //validateStudentData(student);
         return studentRepository.save(student);
     }
-
-   /* private void validateStudentData(StudentEntity student) {
-        if (StringUtils.isBlank(student.getFirstName()) || StringUtils.isEmpty(student.getLastName())) {
-            throw new ValidationException("Student's first and last name are required");
-        }
-    }*/
 
     @Transactional
     public void delete(Long id) {
@@ -78,6 +71,37 @@ public class StudentService {
         // Business logic
         student.setAverageScore(newScore);
         studentRepository.save(student);
+    }
+
+
+
+
+
+    @Transactional
+    public List<StudentEntity> searchStudents(String firstName, String lastName, String level, Long groupId, String establishment) {
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<StudentEntity> cq = cb.createQuery(StudentEntity.class);
+        Root<StudentEntity> student = cq.from(StudentEntity.class);
+
+        Predicate[] predicates = Stream.of(
+                        buildPredicate(firstName, name -> cb.like(cb.lower(student.get("firstName")), "%" + name.toLowerCase() + "%")),
+                        buildPredicate(lastName, name -> cb.like(cb.lower(student.get("lastName")), "%" + name.toLowerCase() + "%")),
+                        buildPredicate(level, lev -> cb.equal(student.get("level"), lev)),
+                        buildPredicate(groupId, id -> {
+                            Join<StudentEntity, GroupEntity> groupsJoin = student.join("groups");
+                            return cb.equal(groupsJoin.get("id"), id);
+                        }),
+                        buildPredicate(establishment, est -> cb.equal(student.get("establishment"), est))
+                )
+                .filter(Objects::nonNull)
+                .toArray(Predicate[]::new);
+
+        cq.where(cb.and(predicates));
+        return entityManager.createQuery(cq).getResultList();
+    }
+
+    private <T> Predicate buildPredicate(T value, Function<T, Predicate> predicateFunction) {
+        return (value != null) ? predicateFunction.apply(value) : null;
     }
 
     @Transactional(readOnly = true)
@@ -111,35 +135,8 @@ public class StudentService {
     }
 
     @Transactional(readOnly = true)
-    public List<StudentEntity> findByTutorId(Long tutorId) {
-        return studentRepository.findByTutorId(tutorId);
-    }
-
-    @Transactional(readOnly = true)
     public List<StudentEntity> findByEstablishment(String establishment) {
         return studentRepository.findByEstablishment(establishment);
     }
 
-    @Transactional(readOnly = true)
-    public List<StudentEntity> findByFirstNameContainingOrLastNameContaining(String firstName, String lastName) {
-        return studentRepository.findByFirstNameContainingOrLastNameContaining(firstName, lastName);
-    }
-
-    @Transactional(readOnly = true)
-    public List<StudentEntity> findByAverageScoreBetween(Double minScore, Double maxScore) {
-        return studentRepository.findByAverageScoreBetween(minScore, maxScore);
-    }
-
-    @Transactional(readOnly = true)
-    public List<StudentEntity> findByActive(Boolean active) {
-        return studentRepository.findByActive(active);
-    }
-
-    public List<GroupEntity> getGroupsByStudentId(Long studentId) {
-        // Utilise la méthode du repository pour récupérer les groupes
-        return studentRepository.findGroupsByStudentId(studentId);
-    }
-
-
-    // Additional methods for business logic...
 }

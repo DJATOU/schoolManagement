@@ -19,5 +19,7 @@ public interface AttendanceRepository extends JpaRepository<AttendanceEntity, Lo
     // find present student by session id and group id
     List<AttendanceEntity> findBySessionIdAndStudent_Groups_Id(Long sessionId, Long groupId);
 
+    long countByStudentIdAndIsPresent(Long studentId, Boolean isPresent);
+
 
 }

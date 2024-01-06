@@ -1,9 +1,9 @@
 package com.school.management.dto;
 
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.Set;
@@ -16,6 +16,9 @@ import java.util.Set;
 public class GroupDTO {
 
     private Long id;
+
+    @NotNull(message = "Group name is required")
+    private String name;
 
     @NotNull(message = "Group type ID is required")
     private Long groupTypeId;

@@ -29,7 +29,7 @@ public class SessionService {
         return sessionRepository.save(session);
     }
 
-    public SessionEntity updateSession(Long id, SessionEntity sessionDetails) {
+    public SessionEntity updateSession(Long id) {
         SessionEntity session = getSessionById(id)
                 .orElseThrow(() -> new RuntimeException("Session not found")); // Customize this exception
         // Update session fields here

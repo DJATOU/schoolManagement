@@ -1,8 +1,11 @@
 package com.school.management.persistance;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import lombok.*;
-import java.util.Date;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -13,11 +16,17 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@JsonIdentityInfo(
+        generator = ObjectIdGenerators.PropertyGenerator.class,
+        property = "id")
 public class GroupEntity extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "name")
+    private String name;
 
     @ManyToOne
     @JoinColumn(name = "group_type_id")
@@ -38,21 +47,15 @@ public class GroupEntity extends BaseEntity {
     @JoinColumn(name = "price_id")
     private PricingEntity price; // Link to the PriceEntity
 
-    @Column(name = "date_creation")
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date dateCreation;
-
-    @Column(name = "date_update")
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date dateUpdate;
-
     @Column(name = "active")
     private Boolean active;
 
     @ManyToOne
     @JoinColumn(name = "teacher_id")
+    @JsonBackReference
     private TeacherEntity teacher;
 
+    @Builder.Default
     @ManyToMany(mappedBy = "groups")
     private Set<StudentEntity> students = new HashSet<>();
 
