@@ -5,7 +5,6 @@ import com.school.management.repository.TutorRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
 import java.util.List;
 
 @Service
@@ -31,10 +30,9 @@ public class TutorService {
         return tutorRepository.save(tutor);
     }
 
-    public TutorEntity updateTutor(Long id, TutorEntity tutor) {
+    public TutorEntity updateTutor(Long id) {
         TutorEntity existingTutor = getTutorById(id);
         // Update properties of existingTutor using values from tutor
-        existingTutor.setDateUpdate(new Date());
         return tutorRepository.save(existingTutor);
     }
 

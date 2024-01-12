@@ -4,7 +4,6 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
-import java.math.BigDecimal;
 import java.util.Date;
 import java.util.Set;
 
@@ -35,13 +34,11 @@ public class GroupDTO {
     @NotNull(message = "Price ID is required")
     private Long priceId;
 
-    private String priceDescription; // Description of the price
-
-    private BigDecimal priceAmount;
-
     private Date dateCreation;
     private Date dateUpdate;
     private Boolean active;
+
+    private String description;
 
     @NotNull(message = "Teacher ID is required")
     private Long teacherId;

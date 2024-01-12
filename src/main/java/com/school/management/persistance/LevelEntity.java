@@ -17,7 +17,10 @@ public class LevelEntity extends BaseEntity {
     private Long id;
 
     @Column(name = "name")
-    private String name; // "1st", "2nd", "3rd", etc.
+    private String name; //
+
+    @Column(name = "level_code")
+    private String levelCode;// "1st", "2nd", "3rd", etc.
 
 
 }

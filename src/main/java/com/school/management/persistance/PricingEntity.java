@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "price")
@@ -20,5 +21,12 @@ public class PricingEntity extends BaseEntity {
 
     @Column(name = "price")
     private BigDecimal price;
+
+    @Column(name = "effective_date")
+    private LocalDateTime effectiveDate;
+
+    @Column(name = "expiration_date")
+    private LocalDateTime expirationDate;
+
 
 }

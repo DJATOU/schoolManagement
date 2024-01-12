@@ -3,6 +3,8 @@ package com.school.management.persistance;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.Set;
+
 @Entity
 @Table(name = "session_series")
 @Getter
@@ -38,6 +40,8 @@ public class SessionSeriesEntity extends BaseEntity {
     @Column(name = "sessions_completed")
     private int sessionsCompleted; // Nombre de séances déjà complétées
 
+    @OneToMany(mappedBy = "sessionSeries")
+    private Set<SessionEntity> sessions ;
     // ... autres champs et méthodes ...
 }
 

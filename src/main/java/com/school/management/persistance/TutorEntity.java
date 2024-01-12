@@ -1,9 +1,11 @@
 package com.school.management.persistance;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import lombok.*;
 
-import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -19,6 +21,10 @@ public class TutorEntity extends PersonEntity {
     private String relationship; // e.g., Parent, Guardian, etc.
 
     @OneToMany(mappedBy = "tutor")
-    private Set<StudentEntity> students = new HashSet<>();
+    private Set<StudentEntity> students ;
+
+    @Column(name = "occupation")
+    private String occupation;
+
 
 }

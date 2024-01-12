@@ -3,10 +3,7 @@ package com.school.management.persistance;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.*;
 import java.util.Set;
 
@@ -26,6 +23,22 @@ public class TeacherEntity extends PersonEntity {
     @OneToMany(mappedBy = "teacher", fetch = FetchType.EAGER)
     @JsonManagedReference
     private Set<GroupEntity> groups ;
+
+    @Column(name = "specialization")
+    private String specialization;
+
+    @Column(name = "qualifications", columnDefinition = "TEXT")
+    private String qualifications;
+
+    @Column(name = "years_of_experience")
+    private Integer yearsOfExperience;
+
+    @Column(name = "teaching_philosophy", columnDefinition = "TEXT")
+    private String teachingPhilosophy;
+
+
+
+
 
 
 }

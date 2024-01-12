@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.Date;
-import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -21,6 +20,15 @@ public class SessionEntity extends BaseEntity {
 
     @Column(name = "title")
     private String title;
+
+    @Column(name = "session_type")
+    private String sessionType;
+
+    @Column(name = "feedback_link") // A link to a feedback form or survey for the session
+    private String feedbackLink;
+
+    @Column(name = "is_finished")
+    private Boolean isFinished;
 
     @ManyToOne
     @JoinColumn(name = "group_id")
@@ -43,7 +51,10 @@ public class SessionEntity extends BaseEntity {
     private RoomEntity room;
 
     @OneToMany(mappedBy = "session")
-    private Set<AttendanceEntity> attendances = new HashSet<>();
+    private Set<AttendanceEntity> attendances ;
 
-    // Methods...
+    @ManyToOne
+    @JoinColumn(name = "session_series_id")
+    private SessionSeriesEntity sessionSeries;
+
 }

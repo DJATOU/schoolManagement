@@ -1,10 +1,16 @@
 package com.school.management.persistance;
 
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 @MappedSuperclass
 @Getter @Setter
@@ -13,12 +19,10 @@ import java.util.Date;
 public abstract class BaseEntity {
 
     @Column(name = "date_creation", updatable = false)
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date dateCreation;
+    private LocalDateTime dateCreation;
 
     @Column(name = "date_update")
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date dateUpdate;
+    private LocalDateTime  dateUpdate;
 
     @Column(name = "created_by")
     private String createdBy;
@@ -34,7 +38,7 @@ public abstract class BaseEntity {
 
     @PrePersist
     protected void onCreate() {
-        dateCreation = new Date();
+        dateCreation = LocalDateTime.now();
         active = true;
         // createdBy should be set based on the current user context
         createdBy = "admin";
@@ -42,6 +46,6 @@ public abstract class BaseEntity {
 
     @PreUpdate
     protected void onUpdate() {
-        dateUpdate = new Date();
+        dateUpdate = LocalDateTime.now();
     }
 }
