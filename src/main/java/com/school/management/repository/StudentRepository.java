@@ -24,12 +24,6 @@ public interface StudentRepository extends JpaRepository<StudentEntity, Long> {
 
     List<StudentEntity> findByEstablishment(String establishment);
 
-    List<StudentEntity> findByFirstNameContainingOrLastNameContaining(String firstName, String lastName);
-
-    List<StudentEntity> findByAverageScoreBetween(Double minScore, Double maxScore);
-
-    List<StudentEntity> findByActive(Boolean active);
-
     @Query("SELECT s FROM StudentEntity s JOIN s.groups g WHERE g.subject.id = :subjectId")
     List<StudentEntity> findStudentsBySubjectId(Long subjectId);
 

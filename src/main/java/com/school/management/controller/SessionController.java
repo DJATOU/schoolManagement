@@ -1,7 +1,7 @@
 package com.school.management.controller;
 
-import com.school.management.dto.SessionDTO;
-import com.school.management.dto.SessionSearchCriteriaDTO;
+import com.school.management.dto.session.SessionDTO;
+import com.school.management.dto.session.SessionSearchCriteriaDTO;
 import com.school.management.mapper.SessionMapper;
 import com.school.management.persistance.SessionEntity;
 import com.school.management.service.SessionService;

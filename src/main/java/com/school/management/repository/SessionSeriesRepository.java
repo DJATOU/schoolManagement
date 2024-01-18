@@ -8,6 +8,5 @@ import java.util.List;
 
 @Repository
 public interface SessionSeriesRepository extends JpaRepository<SessionSeriesEntity, Long> {
-     List<SessionSeriesEntity> findByStudentId(Long studentId);
 
 }

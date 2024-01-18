@@ -1,6 +1,6 @@
 package com.school.management.mapper;
 
-import com.school.management.dto.SessionDTO;
+import com.school.management.dto.session.SessionDTO;
 import com.school.management.persistance.GroupEntity;
 import com.school.management.persistance.RoomEntity;
 import com.school.management.persistance.SessionEntity;

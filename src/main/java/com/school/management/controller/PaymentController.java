@@ -78,6 +78,28 @@ public class PaymentController {
         return new ResponseEntity<>(convertToDto(updatedPayment), HttpStatus.OK);
     }
 
+
+    @PostMapping("/process")
+    public ResponseEntity<PaymentDTO> processPayment(@Valid @RequestBody PaymentDTO paymentDto) {
+        // Convertir PaymentDTO en PaymentEntity
+        PaymentEntity paymentEntity = convertToEntity(paymentDto);
+
+        // Appeler le service pour traiter le paiement
+        PaymentEntity processedPayment = paymentService.processPayment(
+                paymentEntity.getStudent().getId(),
+                paymentEntity.getGroup().getId(),
+                paymentEntity.getSessionSeries().getId(),
+                paymentEntity.getAmountPaid()
+        );
+
+        // Convertir le paiement traité en DTO pour la réponse
+        PaymentDTO responseDto = convertToDto(processedPayment);
+
+        return ResponseEntity.ok(responseDto);
+    }
+
+
+
     // DTO conversion methods
     private PaymentDTO convertToDto(PaymentEntity payment) {
         PaymentDTO paymentDto = new PaymentDTO();

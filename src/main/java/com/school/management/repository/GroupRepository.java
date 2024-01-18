@@ -14,4 +14,5 @@ public interface GroupRepository extends JpaRepository<GroupEntity, Long> {
     List<GroupEntity> findByTeacherId(Long teacherId);
     List<GroupEntity> findByActive(Boolean active);
 
+    List<GroupEntity> findByStudentId(Long id);
 }

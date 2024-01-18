@@ -54,7 +54,7 @@ public class AttendanceController {
         return ResponseEntity.ok(attendanceService.updateAttendance(id));
     }
 
-    @PatchMapping("/attendances/{id}")
+    @PatchMapping("/{id}")
     public ResponseEntity<AttendanceDTO> patchAttendance(@PathVariable Long id, @RequestBody Map<String, Object> updates) {
         AttendanceEntity attendance = attendanceService.getAttendanceById(id);
         patchService.applyPatch(attendance, updates);
@@ -62,8 +62,6 @@ public class AttendanceController {
         AttendanceDTO attendanceDTO = attendanceMapper.attendanceToAttendanceDTO(updatedAttendance);
         return ResponseEntity.ok(attendanceDTO);
     }
-
-
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteAttendance(@PathVariable Long id) {

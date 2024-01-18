@@ -3,16 +3,19 @@ package com.school.management.repository;
 import com.school.management.persistance.PaymentEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface PaymentRepository extends JpaRepository<PaymentEntity, Long> {
     // You can add custom query methods here if needed
     @Query("SELECT SUM(p.amountPaid) FROM PaymentEntity p WHERE p.student.id = :studentId")
     Double sumPaymentsForStudent(Long studentId);
-    @Query("SELECT SUM(p.amountPaid) FROM PaymentEntity p WHERE p.student.id = :studentId")
+;
+   /* @Query("SELECT SUM(p.amountPaid) FROM PaymentEntity p WHERE p.student.id = :studentId")
     Double sumPaymentsByStudentId(Long studentId);
 
     @Query("SELECT SUM(p.amountPaid) FROM PaymentEntity p WHERE p.student.id = :studentId AND p.session.id = :sessionId")
@@ -52,7 +55,7 @@ public interface PaymentRepository extends JpaRepository<PaymentEntity, Long> {
     Double sumPaymentsForStudentBySessionAndActiveAndActive(Long studentId, Long sessionId);
 
     @Query("SELECT SUM(p.amountPaid) FROM PaymentEntity p WHERE p.student.id = :studentId AND p.session.id = :sessionId AND p.active = false")
-    Double sumPaymentsForStudentBySessionAndInactiveAndActive(Long studentId, Long sessionId);
+    Double sumPaymentsForStudentBySessionAndInactiveAndActive(Long studentId, Long sessionId);*/
 
     //@Query("SELECT SUM(p.amountPaid) FROM PaymentEntity p WHERE p.student.id = :studentId AND p.active = true")
     List<PaymentEntity> findAllByStudentId(Long studentId);
@@ -60,10 +63,10 @@ public interface PaymentRepository extends JpaRepository<PaymentEntity, Long> {
     List<PaymentEntity> findAllByStudentIdOrderByPaymentDateDesc(Long studentId);
 
 
+    Optional<PaymentEntity> findByStudentIdAndGroupId(Long studentId, Long groupId);
 
+    Optional<PaymentEntity> findByStudentIdAndGroupIdAndSessionSeriesId(Long studentId, Long groupId, Long seriesId);
 
-
-
-
-
+    @Query("SELECT p.amountPaid FROM PaymentEntity p WHERE p.student.id = :studentId AND p.sessionSeries.id = :seriesId")
+    Double findAmountPaidForStudentAndSeries(@Param("studentId") Long studentId, @Param("seriesId") Long seriesId);
 }

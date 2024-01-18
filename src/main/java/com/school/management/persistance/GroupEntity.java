@@ -40,8 +40,8 @@ public class GroupEntity extends BaseEntity {
     @JoinColumn(name = "subject_id")
     private SubjectEntity subject;
 
-    @Column(name = "session_per_week")
-    private int sessionsPerWeek;
+    @Column(name = "session_per_serie")
+    private int sessionNumberPerSerie;
 
     @ManyToOne
     @JoinColumn(name = "price_id")

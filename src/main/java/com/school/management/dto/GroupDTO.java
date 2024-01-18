@@ -29,7 +29,7 @@ public class GroupDTO {
     private Long subjectId;
 
     @Min(1)
-    private int sessionsPerWeek;
+    private int sessionNumberPerSerie;
 
     @NotNull(message = "Price ID is required")
     private Long priceId;

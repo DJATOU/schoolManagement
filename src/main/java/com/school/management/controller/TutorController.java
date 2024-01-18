@@ -35,8 +35,8 @@ public class TutorController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<TutorEntity> updateTutor(@PathVariable Long id, @RequestBody TutorEntity tutor) {
-        return ResponseEntity.ok(tutorService.updateTutor(id, tutor));
+    public ResponseEntity<TutorEntity> updateTutor(@PathVariable Long id) {
+        return ResponseEntity.ok(tutorService.updateTutor(id));
     }
 
     @DeleteMapping("/{id}")

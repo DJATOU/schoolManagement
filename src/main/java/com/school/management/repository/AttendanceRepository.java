@@ -21,5 +21,7 @@ public interface AttendanceRepository extends JpaRepository<AttendanceEntity, Lo
 
     long countByStudentIdAndIsPresent(Long studentId, Boolean isPresent);
 
+    long countByStudentIdAndSessionSeriesIdAndIsPresent(Long studentId, Long seriesId, boolean isPresent);
+
 
 }

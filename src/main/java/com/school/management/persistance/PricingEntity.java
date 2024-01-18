@@ -20,7 +20,7 @@ public class PricingEntity extends BaseEntity {
     private Long id;
 
     @Column(name = "price")
-    private BigDecimal price;
+    private Double price;
 
     @Column(name = "effective_date")
     private LocalDateTime effectiveDate;

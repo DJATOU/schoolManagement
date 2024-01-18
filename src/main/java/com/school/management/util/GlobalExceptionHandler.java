@@ -11,6 +11,9 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.validation.ObjectError;
 
 
+import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @ControllerAdvice
@@ -20,7 +23,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiErrorResponse> handleCustomServiceException(CustomServiceException e) {
         ApiErrorResponse error = new ApiErrorResponse(HttpStatus.NOT_FOUND, e.getMessage(), "NOT_FOUND");
         logger.error("CustomServiceException: {}", e.getMessage());
-        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -38,4 +41,5 @@ public class GlobalExceptionHandler {
         logger.error("Internal server error: {}", e.getMessage(), e);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
     }
+
 }

@@ -1,6 +1,6 @@
 package com.school.management.service;
 
-import com.school.management.dto.SessionSearchCriteriaDTO;
+import com.school.management.dto.session.SessionSearchCriteriaDTO;
 import com.school.management.persistance.GroupEntity;
 import com.school.management.persistance.SessionEntity;
 import com.school.management.repository.GroupRepository;

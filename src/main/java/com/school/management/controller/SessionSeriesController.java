@@ -23,6 +23,7 @@ public class SessionSeriesController {
         this.sessionSeriesService = sessionSeriesService;
         this.patchService = patchService;
     }
+
     @GetMapping
     public ResponseEntity<List<SessionSeriesEntity>> getAllSessionSeries() {
         return ResponseEntity.ok(sessionSeriesService.getAllSessionSeries());
@@ -52,9 +53,4 @@ public class SessionSeriesController {
     }
 
     // get series by student id
-    @GetMapping("/student/{id}")
-    public ResponseEntity<List<SessionSeriesEntity>> getSessionSeriesByStudentId(@PathVariable Long id) {
-        return ResponseEntity.ok(sessionSeriesService.getSessionSeriesByStudentId(id));
-    }
-
 }

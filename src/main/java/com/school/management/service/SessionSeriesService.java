@@ -34,9 +34,5 @@ public class SessionSeriesService {
         sessionSeriesRepository.deleteById(id);
     }
 
-    public List<SessionSeriesEntity> getSessionSeriesByStudentId(Long id) {
-        return sessionSeriesRepository.findByStudentId(id);
-    }
-
     // Ajoutez d'autres méthodes personnalisées ici selon les besoins
 }

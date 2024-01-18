@@ -40,7 +40,7 @@ public class PaymentEntity extends BaseEntity {
     private String status; // Par exemple, "Completed", "Pending", "Overdue"
 
     @Column(name = "payment_method")
-    private String paymentMethod; // Par exemple, "Cash", "Cheque", "Bank Transfer"
+    private String paymentMethod;
 
     @ManyToOne
     @JoinColumn(name = "session_series_id")
