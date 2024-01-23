@@ -6,7 +6,9 @@ import com.school.management.service.exception.CustomServiceException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -185,34 +187,34 @@ public class PaymentService {
         return remainingAmount;
     }
 
-    public double calculateAmountDue(Long studentId, double pricePerSession) {
-        long numberOfSessionsAttended = attendanceRepository.countByStudentIdAndIsPresent(studentId, true);
-        return pricePerSession * numberOfSessionsAttended;
-    }
-
-    public boolean isStudentPaymentOverdue(Long studentId, double pricePerSession) {
-        double totalDue = calculateAmountDue(studentId, pricePerSession);
-        Double totalPaid = paymentRepository.sumPaymentsForStudent(studentId);
-        if (totalPaid == null) {
-            totalPaid = 0.0; // Si aucun paiement n'a été effectué
+    // Dans PaymentService.java
+    @Transactional
+    public List<StudentPaymentStatus> getPaymentStatusForGroup(Long groupId) {
+        List<StudentPaymentStatus> paymentStatusList = new ArrayList<>();
+        List<StudentEntity> students = studentRepository.findByGroups_Id(groupId);
+        GroupEntity group = getGroup(groupId);
+        for (StudentEntity student : students) {
+            boolean isOverdue = isStudentPaymentOverdueForSeries(student.getId(), groupId, group.getPrice().getPrice());
+            paymentStatusList.add(new StudentPaymentStatus(student.getId(), student.getFirstName(), isOverdue));
         }
-        return totalPaid < totalDue;
-    }
 
-    public double calculateAmountDueForSeries(Long studentId, Long seriesId, double pricePerSession) {
-        long numberOfSessionsAttended = attendanceRepository.countByStudentIdAndSessionSeriesIdAndIsPresent(studentId, seriesId, true);
-        return pricePerSession * numberOfSessionsAttended;
+        return paymentStatusList;
     }
 
     public boolean isStudentPaymentOverdueForSeries(Long studentId, Long seriesId, double pricePerSession) {
-        double totalDueForSeries = calculateAmountDueForSeries(studentId, seriesId, pricePerSession);
+        // Calcule le montant total dû pour toutes les séances auxquelles l'étudiant a assisté dans la série spécifique
+        long numberOfSessionsAttended = attendanceRepository.countByStudentIdAndSessionSeriesIdAndIsPresent(studentId, seriesId, true);
+        double totalDueForSeries = pricePerSession * numberOfSessionsAttended;
+
+        // Trouve le montant total que l'étudiant a payé pour cette série
         Double totalPaidForSeries = paymentRepository.findAmountPaidForStudentAndSeries(studentId, seriesId);
         if (totalPaidForSeries == null) {
-            totalPaidForSeries = 0.0;
+            totalPaidForSeries = 0.0; // Aucun paiement n'a été trouvé pour cette série
         }
+
+        // Compare le montant dû au montant payé pour déterminer si l'étudiant est en retard
         return totalPaidForSeries < totalDueForSeries;
     }
-
 
 
 

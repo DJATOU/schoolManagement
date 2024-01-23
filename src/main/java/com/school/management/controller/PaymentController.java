@@ -1,6 +1,7 @@
 package com.school.management.controller;
 
 import com.school.management.dto.PaymentDTO;
+import com.school.management.dto.StudentPaymentStatusDTO;
 import com.school.management.persistance.*;
 import com.school.management.repository.*;
 import com.school.management.service.PatchService;
@@ -158,6 +159,15 @@ public class PaymentController {
 
         // Return the populated PaymentEntity
         return payment;
+    }
+
+    @GetMapping("/{groupId}/students-payment-status")
+    public ResponseEntity<List<StudentPaymentStatusDTO>> getStudentsPaymentStatus(@PathVariable Long groupId) {
+        List<StudentPaymentStatusDTO> paymentStatusDTOList = paymentService.getPaymentStatusForGroup(groupId).stream()
+                .map(status -> new StudentPaymentStatusDTO(status.getStudentId(),
+                        status.getStudentName(), status.isPaymentOverdue()))
+                .toList();
+        return ResponseEntity.ok(paymentStatusDTOList);
     }
 
 }
