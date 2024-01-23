@@ -3,7 +3,9 @@ package com.school.management.persistance;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 @Entity
 @Table(name = "payments")
@@ -49,6 +51,9 @@ public class PaymentEntity extends BaseEntity {
     @ManyToOne
     @JoinColumn(name = "group_id")
     private GroupEntity group;
+
+    @OneToMany(mappedBy = "payment", cascade = CascadeType.ALL)
+    private List<PaymentDetailEntity> paymentDetails = new ArrayList<>();
 
     @Override
     protected void onCreate() {

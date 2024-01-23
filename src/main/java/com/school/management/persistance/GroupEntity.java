@@ -47,9 +47,6 @@ public class GroupEntity extends BaseEntity {
     @JoinColumn(name = "price_id")
     private PricingEntity price; // Link to the PriceEntity
 
-    @Column(name = "active")
-    private Boolean active;
-
     @ManyToOne
     @JoinColumn(name = "teacher_id")
     @JsonBackReference

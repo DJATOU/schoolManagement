@@ -25,17 +25,22 @@ public class PaymentService {
 
     private final AttendanceRepository attendanceRepository;
 
+    private final SessionSeriesRepository sessionSeriesRepository;
+
+    private static final String completed = "completed" ;
 
     @Autowired
     public PaymentService(PaymentRepository paymentRepository, StudentRepository studentRepository,
                           GroupRepository groupRepository, PaymentDetailRepository paymentDetailRepository,
-                          SessionRepository sessionRepository, AttendanceRepository attendanceRepository){
+                          SessionRepository sessionRepository, AttendanceRepository attendanceRepository
+                          , SessionSeriesRepository sessionSeriesRepository) {
         this.paymentRepository = paymentRepository;
         this.studentRepository = studentRepository;
         this.groupRepository = groupRepository;
         this.paymentDetailRepository = paymentDetailRepository;
         this.sessionRepository = sessionRepository;
         this.attendanceRepository = attendanceRepository;
+        this.sessionSeriesRepository = sessionSeriesRepository;
     }
 
     public List<PaymentEntity> getAllPayments() {
@@ -67,13 +72,18 @@ public class PaymentService {
         return paymentRepository.save(payment);
     }
 
-    public PaymentEntity processPayment(Long studentId, Long groupId, Long seriesId, double amountPaid) {
-        var student = getStudent(studentId);
-        var group = getGroup(groupId);
-        var payment = getOrCreatePayment(student, group, seriesId, amountPaid);
-        distributePayment(payment, seriesId, amountPaid);
+  public PaymentEntity processPayment(Long studentId, Long groupId, Long seriesId, double amountPaid) {
+    var student = getStudent(studentId);
+    var group = getGroup(groupId);
+    var series = getSessionSeries(seriesId);
+    var payment = getOrCreatePayment(student, group, series, amountPaid, seriesId); // Pass seriesId to getOrCreatePayment
 
-        return paymentRepository.save(payment);
+    return paymentRepository.save(payment);
+}
+
+    private SessionSeriesEntity getSessionSeries(Long seriesId) {
+        return sessionSeriesRepository.findById(seriesId)
+                .orElseThrow(() -> new RuntimeException("Series not found with ID: " + seriesId));
     }
 
     private StudentEntity getStudent(Long studentId) {
@@ -86,47 +96,49 @@ public class PaymentService {
                 .orElseThrow(() -> new RuntimeException("Group not found"));
     }
 
-    private PaymentEntity getOrCreatePayment(StudentEntity student, GroupEntity group, Long seriesId, double amountPaid) {
-        var existingPayment = paymentRepository.findByStudentIdAndGroupIdAndSessionSeriesId(student.getId(), group.getId(), seriesId);
-        double totalCost = calculateTotalCost(group);
+    private PaymentEntity getOrCreatePayment(StudentEntity student, GroupEntity group, SessionSeriesEntity series, double amountPaid, Long seriesId) {
+    var existingPayment = paymentRepository.findByStudentIdAndGroupIdAndSessionSeriesId(student.getId(), group.getId(), series.getId());
+    double totalCost = calculateTotalCost(group);
 
-        if (existingPayment.isPresent()) {
-            return getPaymentEntity(amountPaid, existingPayment, totalCost);
-        } else {
-            if (amountPaid > totalCost) {
-                // Si le premier paiement dépasse le coût total, lancez une exception.
-                throw new CustomServiceException("Le montant du paiement ne peut pas dépasser le coût total de la série.");
-            }
-
-            PaymentEntity newPayment = new PaymentEntity();
-            newPayment.setStudent(student);
-            newPayment.setGroup(group);
-            newPayment.setAmountPaid(amountPaid);
-            newPayment.setStatus(amountPaid >= totalCost ? "Completed" : "In Progress");
-            return newPayment;
+    if (existingPayment.isPresent()) {
+        return getPaymentEntity(amountPaid, existingPayment, totalCost, seriesId);
+    } else {
+        if (amountPaid > totalCost) {
+            // Si le premier paiement dépasse le coût total, lancez une exception.
+            throw new CustomServiceException("Le montant du paiement ne peut pas dépasser le coût total de la série.");
         }
+
+        PaymentEntity newPayment = new PaymentEntity();
+        newPayment.setStudent(student);
+        newPayment.setGroup(group);
+        newPayment.setSessionSeries(series);
+        newPayment.setAmountPaid(amountPaid);
+        newPayment.setStatus(amountPaid >= totalCost ? completed : "In Progress");
+        return newPayment;
+    }
+}
+
+   private PaymentEntity getPaymentEntity(double amountPaid, Optional<PaymentEntity> existingPayment, double totalCost, Long seriesId) {
+    if(existingPayment.isEmpty()) {
+        throw new CustomServiceException("Payment NOT FOUND", HttpStatus.NOT_FOUND);
+    }
+    PaymentEntity payment = existingPayment.get();
+    double newTotalAmount = payment.getAmountPaid() + amountPaid;
+
+    if (newTotalAmount > totalCost) {
+        // Si le nouveau montant total dépasse le coût total, lancez une exception.
+        throw new CustomServiceException("Le montant total des paiements a déjà couvert le coût total de la série.", HttpStatus.BAD_REQUEST);
     }
 
-    private static PaymentEntity getPaymentEntity(double amountPaid, Optional<PaymentEntity> existingPayment, double totalCost) {
-        if(existingPayment.isEmpty()) {
-            throw new CustomServiceException("Pyament NOT FOUND", HttpStatus.NOT_FOUND);
-        }
-        PaymentEntity payment = existingPayment.get();
-        double newTotalAmount = payment.getAmountPaid() + amountPaid;
+    payment.setAmountPaid(newTotalAmount);
+    distributePayment(payment, seriesId, amountPaid); // Distribute the payment before setting the status
 
-        if (newTotalAmount > totalCost) {
-            // Si le nouveau montant total dépasse le coût total, lancez une exception.
-            throw new CustomServiceException("Le montant total des paiements a déjà couvert le coût total de la série.", HttpStatus.BAD_REQUEST);
-        }
-
-        payment.setAmountPaid(newTotalAmount);
-        payment.setStatus(newTotalAmount >= totalCost ? "Completed" : "In Progress");
-        return payment;
-    }
-
+    payment.setStatus(newTotalAmount >= totalCost ? completed : "In Progress");
+    return payment;
+}
 
     private void distributePayment(PaymentEntity payment, Long seriesId, double amountPaid) {
-        if (payment.getStatus().equals("Completed")) {
+        if (payment.getStatus().equals(completed)) {
             throw new CustomServiceException("Le paiement pour cette série est déjà complet. Aucune mise à jour supplémentaire n'est autorisée.", HttpStatus.BAD_REQUEST);
         }
         var sessions = getSessionsForSeries(seriesId);
@@ -139,9 +151,9 @@ public class PaymentService {
     }
 
     private List<SessionEntity> getSessionsForSeries(Long seriesId) {
-        // Implement the logic to retrieve sessions that are part of the specified series.
-        // This might involve querying your session repository for sessions linked to the series.
-        return sessionRepository.findBySessionSeriesId(seriesId);
+        SessionSeriesEntity series = sessionSeriesRepository.findById(seriesId)
+                .orElseThrow(() -> new RuntimeException("Series not found with ID: " + seriesId));
+        return sessionRepository.findBySessionSeries(series);
     }
 
     private double calculateTotalCost(GroupEntity group) {
@@ -157,7 +169,6 @@ public class PaymentService {
             double amountToAdd = Math.min(pricePerSession - existingDetail.getAmountPaid(), remainingAmount);
             if (amountToAdd > 0) {
                 existingDetail.setAmountPaid(existingDetail.getAmountPaid() + amountToAdd);
-                paymentDetailRepository.save(existingDetail);
                 return remainingAmount - amountToAdd;
             }
         }
@@ -168,11 +179,10 @@ public class PaymentService {
             newDetail.setAmountPaid(amountToPay);
             newDetail.setPayment(payment);
             newDetail.setSession(session);
-            paymentDetailRepository.save(newDetail);
+            payment.getPaymentDetails().add(newDetail);
             return remainingAmount - amountToPay;
         }
         return remainingAmount;
-
     }
 
     public double calculateAmountDue(Long studentId, double pricePerSession) {
