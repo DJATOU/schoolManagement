@@ -2,10 +2,14 @@ package com.school.management.controller;
 
 import com.school.management.dto.PaymentDTO;
 import com.school.management.dto.StudentPaymentStatusDTO;
+import com.school.management.dto.session.SessionDTO;
+import com.school.management.mapper.SessionMapper;
 import com.school.management.persistance.*;
 import com.school.management.repository.*;
+import com.school.management.service.GroupPaymentStatus;
 import com.school.management.service.PatchService;
 import com.school.management.service.PaymentService;
+import com.school.management.service.StudentPaymentStatus;
 import com.school.management.service.exception.CustomServiceException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,15 +34,19 @@ public class PaymentController {
 
     private final PatchService patchService;
 
+    private final SessionMapper sessionMapper;
+
     @Autowired
     public PaymentController(PaymentService paymentService, StudentRepository studentRepository,
-                             SessionRepository sessionRepository, SessionSeriesRepository sessionSeriesRepository, GroupRepository groupRepository, PatchService patchService){
+                             SessionRepository sessionRepository, SessionSeriesRepository sessionSeriesRepository,
+                             GroupRepository groupRepository, PatchService patchService, SessionMapper sessionMapper) {
         this.paymentService = paymentService;
         this.studentRepository = studentRepository;
         this.sessionRepository = sessionRepository;
         this.sessionSeriesRepository = sessionSeriesRepository;
         this.groupRepository = groupRepository;
         this.patchService = patchService;
+        this.sessionMapper = sessionMapper;
     }
 
     @PostMapping
@@ -162,12 +170,41 @@ public class PaymentController {
     }
 
     @GetMapping("/{groupId}/students-payment-status")
-    public ResponseEntity<List<StudentPaymentStatusDTO>> getStudentsPaymentStatus(@PathVariable Long groupId) {
-        List<StudentPaymentStatusDTO> paymentStatusDTOList = paymentService.getPaymentStatusForGroup(groupId).stream()
-                .map(status -> new StudentPaymentStatusDTO(status.getStudentId(),
-                        status.getStudentName(), status.isPaymentOverdue()))
+    public ResponseEntity<List<StudentPaymentStatus>> getStudentsPaymentStatus(@PathVariable Long groupId) {
+        List<StudentPaymentStatus> paymentStatusList = paymentService.getPaymentStatusForGroup(groupId);
+        List<StudentPaymentStatus> paymentStatusDTOList = paymentStatusList.stream()
+                .map(status -> new StudentPaymentStatus(
+                        status.getFirstName(),
+                        status.getLastName(),
+                        status.getEmail(),
+                        status.getPhoneNumber(),
+                        status.getDateOfBirth(),
+                        status.getPlaceOfBirth(),
+                        status.getPhoto(),
+                        status.getLevel(),
+                        status.getGroupIds(),
+                        status.getTutorId(),
+                        status.getEstablishment(),
+                        status.getAverageScore(),
+                        status.isPaymentOverdue()))
                 .toList();
         return ResponseEntity.ok(paymentStatusDTOList);
+    }
+
+    @GetMapping("/students/{studentId}/unpaid-sessions")
+    public ResponseEntity<List<SessionDTO>> getUnpaidAttendedSessions(@PathVariable Long studentId) {
+        List<SessionEntity> unpaidSessions = paymentService.getUnpaidAttendedSessions(studentId);
+        List<SessionDTO> sessionDTOs = unpaidSessions.stream()
+                .map(sessionMapper::sessionEntityToSessionDto) // Convertir SessionEntity en SessionDTO
+                .toList();
+        return ResponseEntity.ok(sessionDTOs);
+    }
+
+
+    @Transactional @GetMapping("/students/{studentId}/payment-status")
+    public ResponseEntity<List<GroupPaymentStatus>> getStudentPaymentStatus(@PathVariable Long studentId) {
+        List<GroupPaymentStatus> paymentStatus = paymentService.getPaymentStatusForStudent(studentId);
+        return ResponseEntity.ok(paymentStatus);
     }
 
 }

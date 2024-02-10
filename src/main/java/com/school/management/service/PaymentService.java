@@ -11,6 +11,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class PaymentService {
@@ -187,19 +189,37 @@ public class PaymentService {
         return remainingAmount;
     }
 
-    // Dans PaymentService.java
     @Transactional
     public List<StudentPaymentStatus> getPaymentStatusForGroup(Long groupId) {
         List<StudentPaymentStatus> paymentStatusList = new ArrayList<>();
         List<StudentEntity> students = studentRepository.findByGroups_Id(groupId);
         GroupEntity group = getGroup(groupId);
+
         for (StudentEntity student : students) {
             boolean isOverdue = isStudentPaymentOverdueForSeries(student.getId(), groupId, group.getPrice().getPrice());
-            paymentStatusList.add(new StudentPaymentStatus(student.getId(), student.getFirstName(), isOverdue));
+
+            StudentPaymentStatus paymentStatus = new StudentPaymentStatus(
+                    student.getFirstName(),
+                    student.getLastName(),
+                    student.getEmail(),
+                    student.getPhoneNumber(),
+                    student.getDateOfBirth(),
+                    student.getPlaceOfBirth(),
+                    student.getPhoto(),
+                    student.getLevel(),
+                    student.getGroups().stream().map(GroupEntity::getId).collect(Collectors.toSet()),
+                    student.getTutor().getId(),
+                    student.getEstablishment(),
+                    student.getAverageScore(),
+                    isOverdue
+            );
+
+            paymentStatusList.add(paymentStatus);
         }
 
         return paymentStatusList;
     }
+
 
     public boolean isStudentPaymentOverdueForSeries(Long studentId, Long seriesId, double pricePerSession) {
         // Calcule le montant total dû pour toutes les séances auxquelles l'étudiant a assisté dans la série spécifique
@@ -217,5 +237,72 @@ public class PaymentService {
     }
 
 
+    public List<SessionEntity> getAttendedSessions(Long studentId) {
+        return attendanceRepository.findByStudentIdAndIsPresent(studentId, true);
+    }
 
+    public Set<SessionEntity> getPaidSessions(Long studentId) {
+        List<PaymentDetailEntity> paymentDetails = paymentDetailRepository.findByPayment_StudentId(studentId);
+        return paymentDetails.stream()
+                .map(PaymentDetailEntity::getSession)
+                .collect(Collectors.toSet());
+    }
+
+    public List<SessionEntity> getUnpaidAttendedSessions(Long studentId) {
+        List<SessionEntity> attendedSessions = getAttendedSessions(studentId);
+        Set<SessionEntity> paidSessions = getPaidSessions(studentId);
+
+        return attendedSessions.stream()
+                .filter(session -> !paidSessions.contains(session))
+                .toList();
+    }
+
+    public List<GroupPaymentStatus> getPaymentStatusForStudent(Long studentId) {
+        List<GroupPaymentStatus> groupStatuses = new ArrayList<>();
+        List<GroupEntity> groups = groupRepository.findByStudents_Id(studentId);
+
+        for (GroupEntity group : groups) {
+            List<SeriesPaymentStatus> seriesStatuses = new ArrayList<>();
+            List<SessionSeriesEntity> seriesList = sessionSeriesRepository.findByGroupId(group.getId());
+
+            for (SessionSeriesEntity series : seriesList) {
+                List<SessionPaymentStatus> sessionStatuses = getSessionPaymentStatuses(studentId, series);
+                seriesStatuses.add(new SeriesPaymentStatus(series.getId(), sessionStatuses));
+            }
+
+            groupStatuses.add(new GroupPaymentStatus(group.getId(), group.getName(), seriesStatuses));
+        }
+
+        return groupStatuses;
+    }
+
+    private List<SessionPaymentStatus> getSessionPaymentStatuses(Long studentId, SessionSeriesEntity series) {
+        List<SessionPaymentStatus> sessionStatuses = new ArrayList<>();
+        List<SessionEntity> sessions = sessionRepository.findBySessionSeries(series);
+
+        for (SessionEntity session : sessions) {
+            boolean isOverdue = isPaymentOverdueForSession(studentId, session.getId());
+            sessionStatuses.add(new SessionPaymentStatus(session.getId(), session.getTitle(), isOverdue));
+        }
+
+        return sessionStatuses;
+    }
+
+    private boolean isPaymentOverdueForSession(Long studentId, Long sessionId) {
+        // Récupérer les détails du paiement pour l'étudiant et la session spécifiée
+        List<PaymentDetailEntity> paymentDetails = paymentDetailRepository.findByPayment_StudentIdAndSessionId(studentId, sessionId);
+
+        // Récupérer le coût de la session
+        SessionEntity session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new RuntimeException("Session not found with ID: " + sessionId));
+        double sessionCost = session.getGroup().getPrice().getPrice(); // Assurez-vous que cette chaîne d'appels est correcte selon votre modèle
+
+        // Calculer le montant total payé pour la session
+        double totalPaidForSession = paymentDetails.stream()
+                .mapToDouble(PaymentDetailEntity::getAmountPaid)
+                .sum();
+
+        // Comparer le montant total payé au coût de la session
+        return totalPaidForSession < sessionCost;
+    }
 }

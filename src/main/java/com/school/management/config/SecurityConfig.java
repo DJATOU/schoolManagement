@@ -6,6 +6,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
 
 @Configuration
 @EnableWebSecurity
@@ -13,7 +14,9 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
+        http   .cors(cors -> cors
+                        .configurationSource(request -> new CorsConfiguration().applyPermitDefaultValues())
+                )
                 .authorizeHttpRequests(authz -> authz
                         .requestMatchers("/api/v1/aith/**",
                                 "v2/api-docs",
@@ -28,7 +31,7 @@ public class SecurityConfig {
                                 "/swagger-ui.html").permitAll() // Allow Swagger UI
                         .anyRequest().permitAll()
                 ) .csrf(AbstractHttpConfigurer::disable)// Désactiver CSRF si nécessaire, spécialement pour les API REST
-                .cors(AbstractHttpConfigurer::disable);
+               ;
         return http.build();
     }
 }

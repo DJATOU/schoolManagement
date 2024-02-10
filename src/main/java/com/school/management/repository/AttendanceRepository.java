@@ -1,6 +1,7 @@
 package com.school.management.repository;
 
 import com.school.management.persistance.AttendanceEntity;
+import com.school.management.persistance.SessionEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -24,4 +25,5 @@ public interface AttendanceRepository extends JpaRepository<AttendanceEntity, Lo
     long countByStudentIdAndSessionSeriesIdAndIsPresent(Long studentId, Long seriesId, boolean isPresent);
 
 
+    List<SessionEntity> findByStudentIdAndIsPresent(Long studentId, boolean b);
 }
