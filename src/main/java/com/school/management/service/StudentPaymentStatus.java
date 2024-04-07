@@ -12,7 +12,6 @@ import java.util.Set;
 public class StudentPaymentStatus extends StudentDTO {
     private boolean isPaymentOverdue;
 
-    // Si vous avez besoin d'un constructeur qui inclut tous les champs de StudentDTO plus isPaymentOverdue
     public StudentPaymentStatus(
             String firstName,
             String lastName,
@@ -20,7 +19,7 @@ public class StudentPaymentStatus extends StudentDTO {
             String phoneNumber,
             Date dateOfBirth,
             String placeOfBirth,
-            byte[] photo,
+            String photo,
             String level,
             Set<Long> groupIds,
             Long tutorId,

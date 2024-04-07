@@ -1,7 +1,10 @@
 package com.school.management.dto;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.school.management.controller.ByteArrayDeserializer;
 import jakarta.validation.constraints.*;
 import lombok.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Date;
 import java.util.Set;
@@ -29,7 +32,7 @@ public class StudentDTO {
 
     private String placeOfBirth;
 
-    private byte[] photo;
+    private String photo;
 
     @NotNull(message = "Level is required")
     private String level;

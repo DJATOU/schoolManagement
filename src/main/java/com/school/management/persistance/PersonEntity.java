@@ -45,14 +45,10 @@ public abstract class PersonEntity extends BaseEntity {
     @Column(name = "address")
     private String address;
 
-    @Lob
     @Column(name = "photo")
-    private byte[] photo; // Photo as a byte array
+    private String photo;
 
     @Column(name = "communication_preference")
     private String communicationPreference;
-
-
-    //give a json to inert a peron in the database
 
 }

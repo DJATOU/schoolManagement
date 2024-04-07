@@ -1,5 +1,6 @@
 package com.school.management.mapper;
 
+import com.school.management.config.ImageUrlService;
 import com.school.management.dto.StudentDTO;
 import com.school.management.persistance.StudentEntity;
 import java.util.Collections;
@@ -7,10 +8,7 @@ import com.school.management.persistance.GroupEntity;
 import com.school.management.persistance.TutorEntity;
 import com.school.management.repository.TutorRepository;
 import com.school.management.service.exception.CustomServiceException;
-import org.mapstruct.Builder;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.Named;
+import org.mapstruct.*;
 
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -44,4 +42,12 @@ public interface StudentMapper {
                 .findById(id)
                 .orElseThrow(() -> new CustomServiceException("Tutor not found with id: " + id));
     }
+
+    @AfterMapping
+    default void setPhotoUrl(StudentEntity student, @MappingTarget StudentDTO dto) {
+        ImageUrlService imageUrlService = ApplicationContextProvider.getBean(ImageUrlService.class);
+        String photoUrl = imageUrlService.getPhotoUrl(student.getPhoto());
+        dto.setPhoto(photoUrl);
+    }
+
 }

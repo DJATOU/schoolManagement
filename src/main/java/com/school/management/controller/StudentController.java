@@ -10,12 +10,23 @@ import com.school.management.service.StudentService;
 import com.school.management.service.exception.CustomServiceException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 @RestController
@@ -24,6 +35,8 @@ public class StudentController {
     private static final String STUDENT_NOT_FOUND_MESSAGE = "Student not found with id: ";
     private final StudentService studentService;
 
+    @Value("${app.upload.dir}")
+    private String uploadDir;
     private final StudentMapper studentMapper;
 
     @Autowired
@@ -32,12 +45,37 @@ public class StudentController {
         this.studentMapper = studentMapper;
     }
 
-    @PostMapping
-    public ResponseEntity<StudentDTO> createStudent(@Valid @RequestBody StudentDTO studentDto) {
-        StudentEntity student = studentMapper.studentDTOToStudent(studentDto);
-        StudentEntity savedStudent = studentService.save(student);
-        return new ResponseEntity<>(studentMapper.studentToStudentDTO(savedStudent), HttpStatus.CREATED);
+    @PostMapping("/createStudent")
+    public ResponseEntity<?> createStudent(@Valid @ModelAttribute StudentDTO studentDto,
+                                           @RequestParam("file") MultipartFile file) {
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body("File is required and must not be empty.");
+        }
+        String fileName = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
+
+        try {
+            Path uploadPath = Paths.get(uploadDir);
+            if (!Files.exists(uploadPath)) {
+                Files.createDirectories(uploadPath);
+            }
+            Path filePath = uploadPath.resolve(fileName);
+            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+            studentDto.setPhoto(filePath.toString());
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Could not save file: " + fileName);
+        }
+
+        try {
+            StudentEntity student = studentMapper.studentDTOToStudent(studentDto);
+            StudentEntity savedStudent = studentService.save(student);
+            return ResponseEntity.ok(studentMapper.studentToStudentDTO(savedStudent));
+        } catch (Exception e) {
+            // Gestion des autres exceptions potentielles lors de la sauvegarde de l'étudiant
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Could not save student");
+        }
     }
+
+
 
     @PutMapping("/{id}")
     public ResponseEntity<StudentDTO> updateStudent(@PathVariable Long id, @Valid @RequestBody StudentDTO studentDto) {
@@ -56,7 +94,7 @@ public class StudentController {
                 .toList();
         return ResponseEntity.ok(students);
     }
-
+    @Transactional(readOnly = true)
     @GetMapping("/search")
     public ResponseEntity<List<StudentDTO>> searchStudents(
             @RequestParam(required = false) String firstName,
@@ -103,7 +141,7 @@ public class StudentController {
                 .toList();
         return ResponseEntity.ok(students);
     }
-
+    @Transactional(readOnly = true)
     @GetMapping("/firstnames/{firstName}/lastnames/{lastName}")
     public ResponseEntity<List<StudentDTO>> getStudentsByFirstNameAndLastName(@PathVariable String firstName, @PathVariable String lastName) {
         List<StudentDTO> students = studentService.findByFirstNameAndLastName(firstName, lastName).stream()
@@ -112,6 +150,13 @@ public class StudentController {
         return ResponseEntity.ok(students);
     }
 
+    @Transactional(readOnly = true)
+    @GetMapping("/searchByNames")
+    public ResponseEntity<List<StudentDTO>> getStudentsByFirstNameAndOrLastName(@RequestParam(required = false) String search) {
+        List<StudentDTO> students = studentService.searchStudentsByNameStartingWithDTO(search); // Call the correct service method
+        return ResponseEntity.ok(students);
+    }
+    @Transactional(readOnly = true)
     @GetMapping("/lastnames/{lastName}")
     public ResponseEntity<List<StudentDTO>> getStudentsByLastName(@PathVariable String lastName) {
         List<StudentDTO> students = studentService.findByLastName(lastName).stream()

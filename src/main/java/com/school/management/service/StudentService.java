@@ -1,12 +1,14 @@
 package com.school.management.service;
 
+import com.school.management.dto.StudentDTO;
+import com.school.management.mapper.StudentMapper;
 import com.school.management.persistance.GroupEntity;
 import com.school.management.persistance.StudentEntity;
-import com.school.management.repository.StudentGroupRepository;
 import com.school.management.repository.StudentRepository;
 import com.school.management.service.exception.CustomServiceException;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.TypedQuery;
 import jakarta.persistence.criteria.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,10 +17,13 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
@@ -28,9 +33,12 @@ public class StudentService {
     @PersistenceContext
     private EntityManager entityManager;
     private final StudentRepository studentRepository;
+    private final String BASE_PHOTO_URL = "http://localhost:8080/personne/";
+    private StudentMapper studentMapper;
 
     @Autowired
-    public StudentService(StudentRepository studentRepository) {
+    public StudentService(StudentRepository studentRepository, StudentMapper studentMapper){
+        this.studentMapper = studentMapper;
         this.studentRepository = studentRepository;
     }
 
@@ -73,10 +81,6 @@ public class StudentService {
         studentRepository.save(student);
     }
 
-
-
-
-
     @Transactional
     public List<StudentEntity> searchStudents(String firstName, String lastName, String level, Long groupId, String establishment) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
@@ -84,8 +88,8 @@ public class StudentService {
         Root<StudentEntity> student = cq.from(StudentEntity.class);
 
         Predicate[] predicates = Stream.of(
-                        buildPredicate(firstName, name -> cb.like(cb.lower(student.get("firstName")), "%" + name.toLowerCase() + "%")),
-                        buildPredicate(lastName, name -> cb.like(cb.lower(student.get("lastName")), "%" + name.toLowerCase() + "%")),
+                        buildPredicate(firstName, name -> cb.equal(cb.lower(student.get("firstName")), name.toLowerCase())),
+                        buildPredicate(lastName, name -> cb.equal(cb.lower(student.get("lastName")), name.toLowerCase())),
                         buildPredicate(level, lev -> cb.equal(student.get("level"), lev)),
                         buildPredicate(groupId, id -> {
                             Join<StudentEntity, GroupEntity> groupsJoin = student.join("groups");
@@ -99,6 +103,40 @@ public class StudentService {
         cq.where(cb.and(predicates));
         return entityManager.createQuery(cq).getResultList();
     }
+
+    @Transactional(readOnly = true)
+    public List<StudentEntity> searchStudentsByNameStartingWith(String name) {
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<StudentEntity> cq = cb.createQuery(StudentEntity.class);
+        Root<StudentEntity> student = cq.from(StudentEntity.class);
+        String namePattern = name.trim().toLowerCase() + "%";
+
+        Predicate firstNamePredicate = cb.like(cb.lower(student.get("firstName")), namePattern);
+        Predicate lastNamePredicate = cb.like(cb.lower(student.get("lastName")), namePattern);
+        cq.where(cb.or(firstNamePredicate, lastNamePredicate));
+
+        // Exécution de la requête
+        TypedQuery<StudentEntity> query = entityManager.createQuery(cq);
+        return query.getResultList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<StudentDTO> searchStudentsByNameStartingWithDTO(String name) {
+        List<StudentEntity> studentEntities = searchStudentsByNameStartingWith(name);
+        return studentEntities.stream()
+                .map(entity -> {
+                    StudentDTO dto = studentMapper.studentToStudentDTO(entity);
+                    if (entity.getPhoto() != null && !entity.getPhoto().isEmpty()) {
+                        Path photoPath = Paths.get(entity.getPhoto());
+                        String photoName = photoPath.getFileName().toString();
+                        String photoUrl = BASE_PHOTO_URL + photoName; // Construisez l'URL de base ici
+                        dto.setPhoto(photoUrl);
+                    }
+                    return dto;
+                })
+                .collect(Collectors.toList());
+    }
+
 
     private <T> Predicate buildPredicate(T value, Function<T, Predicate> predicateFunction) {
         return (value != null) ? predicateFunction.apply(value) : null;
