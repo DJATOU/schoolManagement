@@ -153,7 +153,7 @@ public class StudentController {
     @Transactional(readOnly = true)
     @GetMapping("/searchByNames")
     public ResponseEntity<List<StudentDTO>> getStudentsByFirstNameAndOrLastName(@RequestParam(required = false) String search) {
-        List<StudentDTO> students = studentService.searchStudentsByNameStartingWithDTO(search); // Call the correct service method
+        List<StudentDTO> students = studentService.searchStudentsByNameStartingWithDTO(search);
         return ResponseEntity.ok(students);
     }
     @Transactional(readOnly = true)

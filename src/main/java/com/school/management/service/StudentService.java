@@ -105,20 +105,39 @@ public class StudentService {
     }
 
     @Transactional(readOnly = true)
-    public List<StudentEntity> searchStudentsByNameStartingWith(String name) {
+    public List<StudentEntity> searchStudentsByNameStartingWith(String input) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<StudentEntity> cq = cb.createQuery(StudentEntity.class);
         Root<StudentEntity> student = cq.from(StudentEntity.class);
-        String namePattern = name.trim().toLowerCase() + "%";
 
-        Predicate firstNamePredicate = cb.like(cb.lower(student.get("firstName")), namePattern);
-        Predicate lastNamePredicate = cb.like(cb.lower(student.get("lastName")), namePattern);
-        cq.where(cb.or(firstNamePredicate, lastNamePredicate));
+        // Normalize and split input by spaces
+        String[] nameParts = input.trim().toLowerCase().split("\\s+");
+        Predicate finalPredicate;
 
-        // Exécution de la requête
+        if (nameParts.length == 1) {
+            String pattern = nameParts[0] + "%";
+            // Search either first or last name if only one name part is provided
+            Predicate firstNamePredicate = cb.like(cb.lower(student.get("firstName")), pattern);
+            Predicate lastNamePredicate = cb.like(cb.lower(student.get("lastName")), pattern);
+            finalPredicate = cb.or(firstNamePredicate, lastNamePredicate);
+        } else {
+            // Assume the first part is the first name and the second part is the last name for simplicity
+            String firstNamePattern = nameParts[0] + "%";
+            String lastNamePattern = nameParts[1] + "%";
+            Predicate firstNamePredicate = cb.like(cb.lower(student.get("firstName")), firstNamePattern);
+            Predicate lastNamePredicate = cb.like(cb.lower(student.get("lastName")), lastNamePattern);
+
+            // Apply both conditions
+            finalPredicate = cb.and(firstNamePredicate, lastNamePredicate);
+        }
+
+        cq.where(finalPredicate);
+
+        // Execute the query
         TypedQuery<StudentEntity> query = entityManager.createQuery(cq);
         return query.getResultList();
     }
+
 
     @Transactional(readOnly = true)
     public List<StudentDTO> searchStudentsByNameStartingWithDTO(String name) {
@@ -129,12 +148,12 @@ public class StudentService {
                     if (entity.getPhoto() != null && !entity.getPhoto().isEmpty()) {
                         Path photoPath = Paths.get(entity.getPhoto());
                         String photoName = photoPath.getFileName().toString();
-                        String photoUrl = BASE_PHOTO_URL + photoName; // Construisez l'URL de base ici
+                        String photoUrl = BASE_PHOTO_URL + photoName;
                         dto.setPhoto(photoUrl);
                     }
                     return dto;
                 })
-                .collect(Collectors.toList());
+                .toList();
     }
 
 

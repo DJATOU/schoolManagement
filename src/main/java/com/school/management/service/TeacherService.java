@@ -1,11 +1,13 @@
 package com.school.management.service;
 
+import com.school.management.persistance.StudentEntity;
 import com.school.management.persistance.TeacherEntity;
 import com.school.management.repository.TeacherRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -18,6 +20,11 @@ public class TeacherService {
     @Autowired
     public TeacherService(TeacherRepository teacherRepository) {
         this.teacherRepository = teacherRepository;
+    }
+
+    @Transactional
+    public TeacherEntity save(TeacherEntity teacher) {
+        return teacherRepository.save(teacher);
     }
 
     public List<TeacherEntity> getAllTeachers() {
