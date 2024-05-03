@@ -19,6 +19,9 @@ public class StudentDTO {
     @NotBlank(message = "Last name is required")
     private String lastName;
 
+    @NotBlank(message = "Gender is required")
+    private String gender;
+
     @Email(message = "Email should be valid")
     private String email;
 

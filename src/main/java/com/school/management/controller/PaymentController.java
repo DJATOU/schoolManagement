@@ -176,6 +176,7 @@ public class PaymentController {
                 .map(status -> new StudentPaymentStatus(
                         status.getFirstName(),
                         status.getLastName(),
+                        status.getGender(),
                         status.getEmail(),
                         status.getPhoneNumber(),
                         status.getDateOfBirth(),

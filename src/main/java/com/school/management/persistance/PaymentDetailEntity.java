@@ -2,6 +2,7 @@ package com.school.management.persistance;
 
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.util.Date;
 
@@ -11,7 +12,7 @@ import java.util.Date;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@SuperBuilder
 public class PaymentDetailEntity extends BaseEntity {
 
     @Id

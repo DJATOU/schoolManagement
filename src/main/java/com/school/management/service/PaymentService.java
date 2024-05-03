@@ -201,6 +201,7 @@ public class PaymentService {
             StudentPaymentStatus paymentStatus = new StudentPaymentStatus(
                     student.getFirstName(),
                     student.getLastName(),
+                    student.getGender(),
                     student.getEmail(),
                     student.getPhoneNumber(),
                     student.getDateOfBirth(),

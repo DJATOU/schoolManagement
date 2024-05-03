@@ -16,6 +16,8 @@ import java.util.Set;
 @Builder
 public class TeacherDTO {
 
+    Long id;
+
     @NotBlank(message = "First name is required")
     private String firstName;
 

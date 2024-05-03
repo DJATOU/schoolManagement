@@ -16,6 +16,7 @@ public class StudentPaymentStatus extends StudentDTO {
             String firstName,
             String lastName,
             String email,
+            String gender,
             String phoneNumber,
             Date dateOfBirth,
             String placeOfBirth,
@@ -27,7 +28,7 @@ public class StudentPaymentStatus extends StudentDTO {
             Double averageScore,
             boolean isPaymentOverdue
     ) {
-        super(firstName, lastName, email, phoneNumber, dateOfBirth, placeOfBirth, photo, level, groupIds, tutorId, establishment, averageScore);
+        super(firstName, lastName, gender, email, phoneNumber, dateOfBirth, placeOfBirth, photo, level, groupIds, tutorId, establishment, averageScore);
         this.isPaymentOverdue = isPaymentOverdue;
     }
 

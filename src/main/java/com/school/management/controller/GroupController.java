@@ -31,7 +31,7 @@ public class GroupController {
         this.groupMapper = groupMapper;
     }
 
-    @PostMapping
+    @PostMapping("/createGroupe")
     public ResponseEntity<GroupDTO> createGroup(@RequestBody GroupDTO groupDto) {
         GroupEntity group = groupMapper.groupDTOToGroup(groupDto);
         GroupEntity savedGroup = groupService.save(group);

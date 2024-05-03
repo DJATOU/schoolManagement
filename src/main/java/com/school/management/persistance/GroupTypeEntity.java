@@ -2,6 +2,7 @@ package com.school.management.persistance;
 
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 @Entity
 @Table(name = "group_types")
@@ -9,7 +10,7 @@ import lombok.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@SuperBuilder
 public class GroupTypeEntity extends BaseEntity {
 
     @Id
