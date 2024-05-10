@@ -14,4 +14,6 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addResourceHandler("/personne/**")
                 .addResourceLocations("file:/C:/Users/djato/Pictures/personne/");
     }
+
+
 }

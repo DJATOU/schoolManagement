@@ -6,6 +6,7 @@ import com.school.management.mapper.SessionMapper;
 import com.school.management.persistance.SessionEntity;
 import com.school.management.service.SessionService;
 import com.school.management.service.exception.CustomServiceException;
+import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +42,16 @@ public class SessionController {
         return ResponseEntity.ok(sessionDTOs);
     }
 
+    @GetMapping("/detail")
+    public ResponseEntity<List<SessionDTO>> getAllSessionsWithDetail() {
+        logger.info("Getting all sessions");
+        List<SessionEntity> sessions = sessionService.getAllSessionsWithDetail();
+        List<SessionDTO> sessionDTOs = sessions.stream()
+                .map(sessionMapper::sessionEntityToSessionDto)
+                .toList();
+        return ResponseEntity.ok(sessionDTOs);
+    }
+
 
     @GetMapping("/{id}")
     public ResponseEntity<SessionDTO> getSessionById(@PathVariable Long id) {
@@ -51,7 +62,7 @@ public class SessionController {
     }
 
     @PostMapping
-    public ResponseEntity<SessionDTO> createSession(@RequestBody SessionDTO sessionDTO) {
+    public ResponseEntity<SessionDTO> createSession(@Valid @RequestBody SessionDTO sessionDTO) {
         SessionEntity sessionEntity = sessionMapper.sessionDtoToSessionEntity(sessionDTO);
         SessionEntity createdSession = sessionService.createSession(sessionEntity);
         SessionDTO createdSessionDTO = sessionMapper.sessionEntityToSessionDto(createdSession);

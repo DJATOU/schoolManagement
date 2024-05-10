@@ -31,7 +31,7 @@ public class SessionEntity extends BaseEntity {
     @Column(name = "is_finished")
     private Boolean isFinished;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER) // Ensure eager fetching if using lazy loading by default
     @JoinColumn(name = "group_id")
     private GroupEntity group;
 

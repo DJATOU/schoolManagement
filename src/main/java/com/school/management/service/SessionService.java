@@ -35,6 +35,10 @@ public class SessionService {
         return sessionRepository.findAll();
     }
 
+    public List<SessionEntity> getAllSessionsWithDetail() {
+        return sessionRepository.findAllWithDetails();
+    }
+
     public Optional<SessionEntity> getSessionById(Long id) {
         return sessionRepository.findById(id);
     }

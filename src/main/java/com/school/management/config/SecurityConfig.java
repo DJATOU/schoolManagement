@@ -8,15 +8,23 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 
+import java.util.Arrays;
+
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http   .cors(cors -> cors
-                        .configurationSource(request -> new CorsConfiguration().applyPermitDefaultValues())
-                )
+        http
+                .cors(cors -> cors.configurationSource(request -> {
+                    CorsConfiguration config = new CorsConfiguration();
+                    config.setAllowedOrigins(Arrays.asList("http://localhost:4200")); // Allow this origin
+                    config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+                    config.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type"));
+                    config.setAllowCredentials(true); // Optional
+                    return config;
+                }))
                 .authorizeHttpRequests(authz -> authz
                         .requestMatchers("/api/v1/aith/**",
                                 "v2/api-docs",
