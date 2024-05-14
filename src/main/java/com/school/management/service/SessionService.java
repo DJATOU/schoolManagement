@@ -5,8 +5,10 @@ import com.school.management.persistance.GroupEntity;
 import com.school.management.persistance.SessionEntity;
 import com.school.management.repository.GroupRepository;
 import com.school.management.repository.SessionRepository;
+import com.school.management.service.exception.CustomServiceException;
 import com.school.management.service.util.CommonSpecifications;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -101,6 +103,13 @@ public class SessionService {
         return sessionRepository.findAll(spec);
     }
 
+    @Transactional
+    public SessionEntity markSessionAsFinished(Long sessionId) {
+        SessionEntity session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new CustomServiceException("Session not found with id: " + sessionId));
+        session.setIsFinished(true);
+        return sessionRepository.save(session);
+    }
 
 
 }

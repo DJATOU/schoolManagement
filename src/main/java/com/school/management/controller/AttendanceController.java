@@ -83,6 +83,16 @@ public class AttendanceController {
         return ResponseEntity.ok(savedAttendanceDTOs);
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+    }
+
+    @GetMapping("/session/{sessionId}")
+    public ResponseEntity<List<AttendanceDTO>> getAttendancesBySessionId(@PathVariable Long sessionId) {
+        List<AttendanceDTO> attendances = attendanceService.getAttendanceBySessionId(sessionId);
+        return ResponseEntity.ok(attendances);
+    }
 
     // Additional endpoints as needed...
 }

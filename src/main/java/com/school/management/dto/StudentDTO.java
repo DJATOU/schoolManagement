@@ -13,6 +13,8 @@ import java.util.Set;
 @Builder
 public class StudentDTO {
 
+    Long id;
+
     @NotBlank(message = "First name is required")
     private String firstName;
 

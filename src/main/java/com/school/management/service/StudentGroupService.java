@@ -1,5 +1,6 @@
 package com.school.management.service;
 
+import com.school.management.dto.StudentDTO;
 import com.school.management.dto.StudentGroupDTO;
 import com.school.management.persistance.GroupEntity;
 import com.school.management.persistance.StudentEntity;
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class StudentGroupService {
@@ -82,9 +84,16 @@ public class StudentGroupService {
         }
     }
 
-    private String getCurrentUsername() {
-        // Implémentez la logique pour récupérer le nom d'utilisateur actuel
-        return "admin";
+    public List<StudentDTO> getStudentsByGroupId(Long groupId) {
+        List<StudentGroupEntity> studentGroups = studentGroupRepository.findByGroupId(groupId);
+        return studentGroups.stream()
+                .map(sg -> StudentDTO.builder()
+                        .id(sg.getStudent().getId())
+                        .gender(sg.getStudent().getGender())
+                        .lastName(sg.getStudent().getLastName())
+                        .firstName(sg.getStudent().getFirstName())
+                        .build())
+                .toList();
     }
 
 }

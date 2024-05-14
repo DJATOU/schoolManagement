@@ -174,6 +174,7 @@ public class PaymentController {
         List<StudentPaymentStatus> paymentStatusList = paymentService.getPaymentStatusForGroup(groupId);
         List<StudentPaymentStatus> paymentStatusDTOList = paymentStatusList.stream()
                 .map(status -> new StudentPaymentStatus(
+                        status.getId(),
                         status.getFirstName(),
                         status.getLastName(),
                         status.getGender(),

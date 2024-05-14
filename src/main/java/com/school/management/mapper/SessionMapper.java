@@ -20,13 +20,15 @@ public interface SessionMapper {
             @Mapping(source = "teacher.id", target = "teacherId"),
             @Mapping(source = "teacher", target = "teacherName", qualifiedByName = "formatTeacherName"),
             @Mapping(source = "room.id", target = "roomId"),
-            @Mapping(source = "room.name", target = "roomName")
+            @Mapping(source = "room.name", target = "roomName"),
+            @Mapping(source = "isFinished", target = "isFinished")
     })
     SessionDTO sessionEntityToSessionDto(SessionEntity entity) ;
 
     @Mapping(source = "groupId", target = "group", qualifiedByName = "idToGroup")
     @Mapping(source = "teacherId", target = "teacher", qualifiedByName = "idToTeacher")
     @Mapping(source = "roomId", target = "room", qualifiedByName = "idToRoom")
+    @Mapping(source = "isFinished", target = "isFinished")
     SessionEntity sessionDtoToSessionEntity(SessionDTO dto);
 
     @Named("idToGroup")

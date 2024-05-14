@@ -92,5 +92,9 @@ public class SessionController {
         return ResponseEntity.ok(sessionDTOs);
     }
 
-
+    @PatchMapping("/{sessionId}/finish")
+    public ResponseEntity<SessionDTO> markSessionAsFinished(@PathVariable Long sessionId) {
+        SessionEntity updatedSession = sessionService.markSessionAsFinished(sessionId);
+        return ResponseEntity.ok(sessionMapper.sessionEntityToSessionDto(updatedSession));
+    }
 }

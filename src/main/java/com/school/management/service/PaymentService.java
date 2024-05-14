@@ -199,6 +199,7 @@ public class PaymentService {
             boolean isOverdue = isStudentPaymentOverdueForSeries(student.getId(), groupId, group.getPrice().getPrice());
 
             StudentPaymentStatus paymentStatus = new StudentPaymentStatus(
+                    student.getId(),
                     student.getFirstName(),
                     student.getLastName(),
                     student.getGender(),

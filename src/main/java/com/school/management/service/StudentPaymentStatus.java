@@ -13,6 +13,7 @@ public class StudentPaymentStatus extends StudentDTO {
     private boolean isPaymentOverdue;
 
     public StudentPaymentStatus(
+            Long id,
             String firstName,
             String lastName,
             String email,
@@ -28,7 +29,7 @@ public class StudentPaymentStatus extends StudentDTO {
             Double averageScore,
             boolean isPaymentOverdue
     ) {
-        super(firstName, lastName, gender, email, phoneNumber, dateOfBirth, placeOfBirth, photo, level, groupIds, tutorId, establishment, averageScore);
+        super(id, firstName, lastName, gender, email, phoneNumber, dateOfBirth, placeOfBirth, photo, level, groupIds, tutorId, establishment, averageScore);
         this.isPaymentOverdue = isPaymentOverdue;
     }
 

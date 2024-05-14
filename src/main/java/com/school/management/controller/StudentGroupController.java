@@ -1,10 +1,13 @@
 package com.school.management.controller;
 
+import com.school.management.dto.StudentDTO;
 import com.school.management.dto.StudentGroupDTO;
 import com.school.management.service.StudentGroupService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/student-groups")
@@ -31,5 +34,11 @@ public class StudentGroupController {
         studentGroupDto.setGroupId(groupId);
         studentGroupService.manageStudentGroupAssociations(studentGroupDto);
         return ResponseEntity.ok("Students added to group successfully");
+    }
+
+    @GetMapping("/{groupId}/students")
+    public ResponseEntity<List<StudentDTO>> getStudentsOfGroup(@PathVariable Long groupId) {
+        List<StudentDTO> students = studentGroupService.getStudentsByGroupId(groupId);
+        return ResponseEntity.ok(students);
     }
 }
