@@ -18,6 +18,7 @@ public interface StudentMapper {
 
     @Mapping(source = "tutor.id", target = "tutorId")
     @Mapping(source = "groups", target = "groupIds", qualifiedByName = "groupSetToIdSet")
+    @Mapping(source = "id", target = "id")
     StudentDTO studentToStudentDTO(StudentEntity student);
 
     @Mapping(source = "tutorId", target = "tutor", qualifiedByName = "idToTutor")

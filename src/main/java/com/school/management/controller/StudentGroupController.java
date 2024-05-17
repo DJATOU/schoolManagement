@@ -3,7 +3,9 @@ package com.school.management.controller;
 import com.school.management.dto.StudentDTO;
 import com.school.management.dto.StudentGroupDTO;
 import com.school.management.service.StudentGroupService;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,10 +25,17 @@ public class StudentGroupController {
     @PostMapping("/{studentId}/addGroups")
     public ResponseEntity<String> addGroupsToStudent(@PathVariable Long studentId,
                                                      @RequestBody StudentGroupDTO studentGroupDto) {
-        studentGroupDto.setStudentId(studentId);
-        studentGroupService.manageStudentGroupAssociations(studentGroupDto);
-        return ResponseEntity.ok("Groups added to student successfully");
+        try {
+            studentGroupDto.setStudentId(studentId);
+            studentGroupService.manageStudentGroupAssociations(studentGroupDto);
+            return ResponseEntity.ok("Groups added to student successfully");
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error adding groups to student: " + e.getMessage());
+        }
     }
+
 
     @PostMapping("/{groupId}/addStudents")
     public ResponseEntity<String> addStudentsToGroup(@PathVariable Long groupId,

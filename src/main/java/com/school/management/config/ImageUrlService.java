@@ -6,13 +6,18 @@ import org.springframework.stereotype.Component;
 @Component
 public class ImageUrlService {
 
-    @Value("${app.upload.dir}")
-    private String uploadDir;
+    @Value("${server.url}")
+    private String serverUrl;
+
+    @Value("${images.path}")
+    private String imagesPath;
 
     public String getPhotoUrl(String photoName) {
         if (photoName == null || photoName.isBlank()) {
             return null; // ou une URL par défaut
         }
-        return "/personne/" + photoName;
+        String photoUrl = serverUrl + "/" + imagesPath + "/" + photoName;
+        System.out.println("Generated Photo URL: " + photoUrl); // Log the generated URL
+        return photoUrl;
     }
 }

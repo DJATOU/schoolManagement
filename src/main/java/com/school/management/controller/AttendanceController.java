@@ -94,5 +94,5 @@ public class AttendanceController {
         return ResponseEntity.ok(attendances);
     }
 
-    // Additional endpoints as needed...
+
 }

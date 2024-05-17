@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,6 +33,7 @@ public class StudentGroupService {
         this.studentRepository = studentRepository;
         this.groupRepository = groupRepository;
     }
+
     @Transactional
     public void manageStudentGroupAssociations(StudentGroupDTO studentGroupDto) {
         if (studentGroupDto.isAddingStudentToGroups()) {
@@ -43,7 +45,6 @@ public class StudentGroupService {
         }
     }
 
-
     public void addGroupsToStudent(StudentGroupDTO studentGroupDto) {
         StudentEntity student = studentRepository.findById(studentGroupDto.getStudentId())
                 .orElseThrow(() -> new EntityNotFoundException("Student not found with id: " + studentGroupDto.getStudentId()));
@@ -54,34 +55,51 @@ public class StudentGroupService {
         }
 
         groups.forEach(group -> {
-            StudentGroupEntity studentGroup = StudentGroupEntity.builder()
-                    .student(student)
-                    .group(group)
-                    .dateAssigned(studentGroupDto.getDateAssigned() != null ? studentGroupDto.getDateAssigned() : new Date())
-                    .createdBy(studentGroupDto.getAssignedBy()) //TODO: Change to getCurrentUsername() AUTOMATISEZ LA GESTION DES UTILISATEURS
-                    .description(studentGroupDto.getDescription())
-                    .build();
+            boolean exists = studentGroupRepository.existsByStudentAndGroup(student, group);
+            if (!exists) {
+                StudentGroupEntity studentGroup = StudentGroupEntity.builder()
+                        .student(student)
+                        .group(group)
+                        .dateAssigned(studentGroupDto.getDateAssigned() != null ? studentGroupDto.getDateAssigned() : new Date())
+                        .createdBy(studentGroupDto.getAssignedBy())
+                        .description(studentGroupDto.getDescription())
+                        .build();
 
-            studentGroupRepository.save(studentGroup);
+                studentGroupRepository.save(studentGroup);
+            } else {
+                System.out.println("Student is already associated with group: " + group.getId());
+            }
         });
     }
+
 
     public void addStudentsToGroup(StudentGroupDTO studentGroupDto) {
         GroupEntity group = groupRepository.findById(studentGroupDto.getGroupId())
                 .orElseThrow(() -> new EntityNotFoundException("Group not found with id: " + studentGroupDto.getGroupId()));
 
         List<StudentEntity> students = studentRepository.findAllById(studentGroupDto.getStudentIds());
-        for (StudentEntity student : students) {
-            StudentGroupEntity studentGroup = StudentGroupEntity.builder()
-                    .student(student)
-                    .group(group)
-                    .dateAssigned(studentGroupDto.getDateAssigned() != null ? studentGroupDto.getDateAssigned() : new Date())
-                    .createdBy(studentGroupDto.getAssignedBy())
-                    .description(studentGroupDto.getDescription())
-                    .build();
-
-            studentGroupRepository.save(studentGroup);
+        if (students.size() != studentGroupDto.getStudentIds().size()) {
+            throw new EntityNotFoundException("One or more students not found");
         }
+
+        Set<StudentEntity> existingStudents = group.getStudents();
+        students.forEach(student -> {
+            if (!existingStudents.contains(student)) {
+                StudentGroupEntity studentGroup = StudentGroupEntity.builder()
+                        .student(student)
+                        .group(group)
+                        .dateAssigned(studentGroupDto.getDateAssigned() != null ? studentGroupDto.getDateAssigned() : new Date())
+                        .createdBy(studentGroupDto.getAssignedBy())
+                        .description(studentGroupDto.getDescription())
+                        .build();
+
+                studentGroupRepository.save(studentGroup);
+                existingStudents.add(student); // Ajout de l'étudiant aux étudiants existants du groupe
+            }
+        });
+
+        group.setStudents(existingStudents);
+        groupRepository.save(group);
     }
 
     public List<StudentDTO> getStudentsByGroupId(Long groupId) {
@@ -93,7 +111,6 @@ public class StudentGroupService {
                         .lastName(sg.getStudent().getLastName())
                         .firstName(sg.getStudent().getFirstName())
                         .build())
-                .toList();
+                .collect(Collectors.toList());
     }
-
 }
