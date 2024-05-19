@@ -8,11 +8,14 @@ import com.school.management.persistance.StudentGroupEntity;
 import com.school.management.repository.GroupRepository;
 import com.school.management.repository.StudentGroupRepository;
 import com.school.management.repository.StudentRepository;
+import com.school.management.service.exception.CustomServiceException;
+import com.school.management.service.exception.GroupAlreadyAssociatedException;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -36,6 +39,7 @@ public class StudentGroupService {
 
     @Transactional
     public void manageStudentGroupAssociations(StudentGroupDTO studentGroupDto) {
+        System.out.println("Managing student group associations: " + studentGroupDto); // Ajouter un journal ici
         if (studentGroupDto.isAddingStudentToGroups()) {
             addGroupsToStudent(studentGroupDto);
         } else if (studentGroupDto.isAddingStudentsToGroup()) {
@@ -48,12 +52,16 @@ public class StudentGroupService {
     public void addGroupsToStudent(StudentGroupDTO studentGroupDto) {
         StudentEntity student = studentRepository.findById(studentGroupDto.getStudentId())
                 .orElseThrow(() -> new EntityNotFoundException("Student not found with id: " + studentGroupDto.getStudentId()));
+        System.out.println("Found student: " + student); // Ajouter un journal ici
 
         List<GroupEntity> groups = groupRepository.findAllById(studentGroupDto.getGroupIds());
+        System.out.println("Found groups: " + groups); // Ajouter un journal ici
+
         if (groups.size() != studentGroupDto.getGroupIds().size()) {
             throw new EntityNotFoundException("One or more groups not found");
         }
 
+        List<GroupEntity> alreadyAssociatedGroups = new ArrayList<>();
         groups.forEach(group -> {
             boolean exists = studentGroupRepository.existsByStudentAndGroup(student, group);
             if (!exists) {
@@ -64,13 +72,24 @@ public class StudentGroupService {
                         .createdBy(studentGroupDto.getAssignedBy())
                         .description(studentGroupDto.getDescription())
                         .build();
-
                 studentGroupRepository.save(studentGroup);
+                System.out.println("Added group to student: " + group.getId()); // Ajouter un journal ici
             } else {
+                alreadyAssociatedGroups.add(group);
                 System.out.println("Student is already associated with group: " + group.getId());
             }
         });
+
+        if (!alreadyAssociatedGroups.isEmpty()) {
+            List<String> alreadyAssociatedGroupNames = alreadyAssociatedGroups.stream()
+                    .map(GroupEntity::getName)
+                    .toList();
+            throw new GroupAlreadyAssociatedException("Groups already associated with student", alreadyAssociatedGroupNames);
+        }
     }
+
+
+
 
 
     public void addStudentsToGroup(StudentGroupDTO studentGroupDto) {
