@@ -16,8 +16,6 @@ public interface TeacherMapper {
 
     TeacherDTO teacherToTeacherDTO(TeacherEntity teacher);
 
-    @Mapping(source = "firstName", target = "firstName")
-    @Mapping(source = "lastName", target = "lastName")
     TeacherEntity teacherDTOToTeacher(TeacherDTO teacherDto);
 
 

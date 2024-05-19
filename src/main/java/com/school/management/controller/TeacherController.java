@@ -4,6 +4,7 @@ import com.school.management.dto.TeacherDTO;
 import com.school.management.mapper.TeacherMapper;
 import com.school.management.persistance.TeacherEntity;
 import com.school.management.service.TeacherService;
+import com.school.management.service.exception.CustomServiceException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -44,6 +45,14 @@ public class TeacherController {
                 .map(teacherMapper::teacherToTeacherDTO)
                 .toList();
         return ResponseEntity.ok(teachers);
+    }
+
+    @Transactional(readOnly = true)
+    @GetMapping("/id/{id}")
+    public ResponseEntity<TeacherDTO> getTeacherById(@PathVariable Long id) {
+        TeacherEntity teacher = teacherService.findById(id)
+                .orElseThrow(() -> new CustomServiceException("Teacher not found with id " + id));
+        return ResponseEntity.ok(teacherMapper.teacherToTeacherDTO(teacher));
     }
 
     @GetMapping("/lastname/{lastName}")
@@ -94,6 +103,13 @@ public class TeacherController {
     @PutMapping("/{id}")
     public ResponseEntity<TeacherEntity> updateTeacher(@PathVariable Long id, @RequestBody TeacherEntity teacher) {
         return ResponseEntity.ok(teacherService.updateTeacher(id, teacher));
+    }
+
+    @Transactional(readOnly = true)
+    @GetMapping("/searchByNames")
+    public ResponseEntity<List<TeacherDTO>> getTeachersByFirstNameAndOrLastName(@RequestParam(required = false) String search) {
+        List<TeacherDTO> teachers = teacherService.searchTeachersByNameStartingWithDTO(search);
+        return ResponseEntity.ok(teachers);
     }
 
 }
