@@ -1,5 +1,6 @@
 package com.school.management.persistance;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -31,6 +32,7 @@ public class StudentEntity extends PersonEntity {
             joinColumns = @JoinColumn(name = "student_id"),
             inverseJoinColumns = @JoinColumn(name = "group_id")
     )
+    @JsonIgnoreProperties("students")
     private Set<GroupEntity> groups ;
 
     @OneToMany(mappedBy = "student")

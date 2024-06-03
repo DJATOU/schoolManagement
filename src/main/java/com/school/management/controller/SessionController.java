@@ -10,9 +10,11 @@ import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -97,4 +99,36 @@ public class SessionController {
         SessionEntity updatedSession = sessionService.markSessionAsFinished(sessionId);
         return ResponseEntity.ok(sessionMapper.sessionEntityToSessionDto(updatedSession));
     }
+
+    @GetMapping("/series/{seriesId}")
+    public ResponseEntity<List<SessionDTO>> getSessionsBySeriesId(@PathVariable Long seriesId) {
+        List<SessionDTO> sessions = sessionService.getSessionsBySeriesId(seriesId)
+                .stream()
+                .map(sessionMapper::sessionEntityToSessionDto)
+                .toList();
+        return ResponseEntity.ok(sessions);
+    }
+
+
+    @GetMapping("/range")
+    public ResponseEntity<List<SessionDTO>> getSessionsInRange(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end) {
+        List<SessionDTO> sessions = sessionService.findSessionsInRange(start, end);
+        return ResponseEntity.ok(sessions);
+    }
+
+    @GetMapping("/sessions")
+    public ResponseEntity<List<SessionDTO>> getSessionsInDateRange(
+            @RequestParam Long groupId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end) {
+        List<SessionEntity> sessions = sessionService.getSessionsByGroupIdAndDateRange(groupId, start, end);
+        List<SessionDTO> sessionDTOs = sessions.stream()
+                .map(sessionMapper::sessionEntityToSessionDto)
+                .toList();
+        return ResponseEntity.ok(sessionDTOs);
+    }
+
+
 }

@@ -1,6 +1,8 @@
 package com.school.management.controller;
 
+import com.school.management.dto.GroupDTO;
 import com.school.management.dto.StudentDTO;
+import com.school.management.mapper.GroupMapper;
 import com.school.management.mapper.StudentMapper;
 import com.school.management.persistance.GroupEntity;
 import com.school.management.persistance.StudentEntity;
@@ -28,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/students")
@@ -39,10 +42,13 @@ public class StudentController {
     private String uploadDir;
     private final StudentMapper studentMapper;
 
+    private final GroupMapper groupMapper;
+
     @Autowired
-    public StudentController(StudentService studentService, StudentMapper studentMapper, PatchService patchService) {
+    public StudentController(StudentService studentService, StudentMapper studentMapper, PatchService patchService, GroupMapper groupMapper) {
         this.studentService = studentService;
         this.studentMapper = studentMapper;
+        this.groupMapper = groupMapper;
     }
 
     @PostMapping("/createStudent")
@@ -175,13 +181,14 @@ public class StudentController {
 
     // get groups for student
     @GetMapping("/{id}/groups")
-    public ResponseEntity<Set<GroupEntity>> getGroupsForStudent(@PathVariable Long id) {
+    public ResponseEntity<Set<GroupDTO>> getGroupsForStudent(@PathVariable Long id) {
         StudentEntity student = studentService.findById(id)
-                .orElseThrow(() -> new CustomServiceException(STUDENT_NOT_FOUND_MESSAGE + id));
-        Set<GroupEntity> groups = student.getGroups();
-        return ResponseEntity.ok(groups);
+                .orElseThrow(() -> new CustomServiceException("Student not found with id " + id));
+        Set<GroupDTO> groupDTOs = student.getGroups().stream()
+                .map(groupMapper::groupToGroupDTO)
+                .collect(Collectors.toSet());
+        return ResponseEntity.ok(groupDTOs);
     }
-
 
 
 }

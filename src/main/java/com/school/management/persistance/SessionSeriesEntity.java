@@ -5,6 +5,8 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 
+import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.Set;
 
 @Entity
@@ -19,6 +21,9 @@ public class SessionSeriesEntity extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "name")
+    private String name;
+
     @ManyToOne
     @JoinColumn(name = "group_id")
     private GroupEntity group; // Le groupe associé à la série de sessions
@@ -31,6 +36,14 @@ public class SessionSeriesEntity extends BaseEntity {
 
     @OneToMany(mappedBy = "sessionSeries")
     private Set<SessionEntity> sessions ;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "serie_time_start")
+    private Date serieTimeStart;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "serie_time_end")
+    private Date serieTimeEnd;
     // ... autres champs et méthodes ...
 }
 

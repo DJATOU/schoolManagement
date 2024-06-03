@@ -1,5 +1,7 @@
 package com.school.management.service;
 
+import com.school.management.dto.SessionSeriesDto;
+import com.school.management.mapper.SessionSeriesMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.school.management.persistance.SessionSeriesEntity;
@@ -12,9 +14,12 @@ public class SessionSeriesService {
 
     private final SessionSeriesRepository sessionSeriesRepository;
 
+    private final SessionSeriesMapper sessionSeriesMapper;
+
     @Autowired
-    public SessionSeriesService(SessionSeriesRepository sessionSeriesRepository) {
+    public SessionSeriesService(SessionSeriesRepository sessionSeriesRepository, SessionSeriesMapper sessionSeriesMapper) {
         this.sessionSeriesRepository = sessionSeriesRepository;
+        this.sessionSeriesMapper = sessionSeriesMapper;
     }
 
     public List<SessionSeriesEntity> getAllSessionSeries() {
@@ -33,6 +38,19 @@ public class SessionSeriesService {
     public void deleteSessionSeries(Long id) {
         sessionSeriesRepository.deleteById(id);
     }
+
+    public List<SessionSeriesDto> getSeriesByGroupId(Long groupId) {
+        return sessionSeriesRepository.findByGroupId(groupId).stream()
+                .map(sessionSeriesMapper::toDto)
+                .toList();
+    }
+
+    public List<SessionSeriesDto> getSessionSeriesByGroupId(Long groupId) {
+        return sessionSeriesRepository.findByGroupId(groupId).stream()
+                .map(sessionSeriesMapper::toDto)
+                .toList();
+    }
+
 
     // Ajoutez d'autres méthodes personnalisées ici selon les besoins
 }

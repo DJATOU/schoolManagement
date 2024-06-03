@@ -2,6 +2,7 @@ package com.school.management.persistance;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import lombok.*;
@@ -52,6 +53,7 @@ public class GroupEntity extends BaseEntity {
 
     @Builder.Default
     @ManyToMany(mappedBy = "groups")
+    @JsonIgnore
     private Set<StudentEntity> students = new HashSet<>();
 
 

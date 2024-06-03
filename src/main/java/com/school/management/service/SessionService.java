@@ -1,6 +1,8 @@
 package com.school.management.service;
 
+import com.school.management.dto.session.SessionDTO;
 import com.school.management.dto.session.SessionSearchCriteriaDTO;
+import com.school.management.mapper.SessionMapper;
 import com.school.management.persistance.GroupEntity;
 import com.school.management.persistance.SessionEntity;
 import com.school.management.repository.GroupRepository;
@@ -13,10 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.time.LocalDateTime;
+import java.util.*;
 
 @Service
 public class SessionService {
@@ -25,12 +25,15 @@ public class SessionService {
     private final SessionRepository sessionRepository;
     private final GroupRepository groupRepository;
     private final PatchService patchService;
+    private final SessionMapper sessionMapper;
 
     @Autowired
-    public SessionService(SessionRepository sessionRepository, PatchService patchService, GroupRepository groupRepository){
+    public SessionService(SessionRepository sessionRepository, PatchService patchService, GroupRepository groupRepository,
+                          SessionMapper sessionMapper) {
         this.sessionRepository = sessionRepository;
         this.patchService = patchService;
         this.groupRepository = groupRepository;
+        this.sessionMapper = sessionMapper;
     }
 
     public List<SessionEntity> getAllSessions() {
@@ -111,5 +114,17 @@ public class SessionService {
         return sessionRepository.save(session);
     }
 
+    public List<SessionEntity> getSessionsBySeriesId(Long seriesId) {
+        return sessionRepository.findBySessionSeriesId(seriesId);
+    }
+
+    public List<SessionDTO> findSessionsInRange(LocalDateTime start, LocalDateTime end) {
+        return sessionRepository.findBySessionTimeStartBetween(start, end).stream().map(sessionMapper::sessionEntityToSessionDto)
+                .toList();
+    }
+
+    public List<SessionEntity> getSessionsByGroupIdAndDateRange(Long groupId, LocalDateTime start, LocalDateTime end) {
+        return sessionRepository.findByGroupIdAndSessionTimeStartBetween(groupId, start, end);
+    }
 
 }

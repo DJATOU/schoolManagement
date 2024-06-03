@@ -3,10 +3,12 @@ package com.school.management.controller;
 import com.school.management.dto.GroupDTO;
 import com.school.management.mapper.GroupMapper;
 import com.school.management.persistance.GroupEntity;
-import com.school.management.service.GroupService;
+import com.school.management.service.GroupServiceImpl;
+import com.school.management.service.GroupServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,7 +17,7 @@ import java.util.List;
 @RequestMapping("/api/groups")
 public class GroupController {
 
-    private final GroupService groupService;
+    private final GroupServiceImpl groupService;
     private final GroupMapper groupMapper;
 
     private List<GroupDTO> convertToGroupDTOList(List<GroupEntity> groups) {
@@ -26,7 +28,7 @@ public class GroupController {
 
 
     @Autowired
-    public GroupController(GroupService groupService, GroupMapper groupMapper) {
+    public GroupController(GroupServiceImpl groupService, GroupMapper groupMapper) {
         this.groupService = groupService;
         this.groupMapper = groupMapper;
     }
@@ -121,6 +123,14 @@ public class GroupController {
                 .map(groupMapper::groupToGroupDTO)
                 .toList();
         return ResponseEntity.ok(groupDtos);
+    }
+
+    @GetMapping("/searchByNames")
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<GroupDTO>> getGroupsByName(@RequestParam(required = false) String search) {
+        System.out.println("Received search parameter: " + search);
+        List<GroupDTO> groups = groupService.searchGroupsByNameStartingWithDTO(search);
+        return ResponseEntity.ok(groups);
     }
 
 }
