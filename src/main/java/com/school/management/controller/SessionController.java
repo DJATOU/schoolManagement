@@ -111,15 +111,15 @@ public class SessionController {
 
 
     @GetMapping("/range")
-    public ResponseEntity<List<SessionDTO>> getSessionsInRange(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end) {
-        List<SessionDTO> sessions = sessionService.findSessionsInRange(start, end);
-        return ResponseEntity.ok(sessions);
+    public List<SessionDTO> getSessionsInDateRange(
+            @RequestParam("groupId") Long groupId,
+            @RequestParam("start") LocalDateTime start,
+            @RequestParam("end") LocalDateTime end) {
+        return sessionService.findByGroupIdAndSessionTimeStartBetween(groupId, start, end);
     }
 
     @GetMapping("/sessions")
-    public ResponseEntity<List<SessionDTO>> getSessionsInDateRange(
+    public ResponseEntity<List<SessionDTO>> getSessionsInDateRangeOLD(
             @RequestParam Long groupId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end) {

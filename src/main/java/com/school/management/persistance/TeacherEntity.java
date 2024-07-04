@@ -32,12 +32,4 @@ public class TeacherEntity extends PersonEntity {
     @Column(name = "years_of_experience")
     private Integer yearsOfExperience;
 
-    @Column(name = "teaching_philosophy", columnDefinition = "TEXT")
-    private String teachingPhilosophy;
-
-
-
-
-
-
 }

@@ -127,4 +127,10 @@ public class SessionService {
         return sessionRepository.findByGroupIdAndSessionTimeStartBetween(groupId, start, end);
     }
 
+    public List<SessionDTO> findByGroupIdAndSessionTimeStartBetween(Long groupId, LocalDateTime start, LocalDateTime end) {
+        return sessionRepository.findByGroupIdAndSessionTimeStartBetween(groupId, start, end)
+                .stream()
+                .map(sessionMapper::sessionEntityToSessionDto)
+                .toList();
+    }
 }
