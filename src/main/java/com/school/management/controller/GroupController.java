@@ -4,7 +4,7 @@ import com.school.management.dto.GroupDTO;
 import com.school.management.mapper.GroupMapper;
 import com.school.management.persistance.GroupEntity;
 import com.school.management.service.GroupServiceImpl;
-import com.school.management.service.GroupServiceImpl;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,7 +34,7 @@ public class GroupController {
     }
 
     @PostMapping("/createGroupe")
-    public ResponseEntity<GroupDTO> createGroup(@RequestBody GroupDTO groupDto) {
+    public ResponseEntity<GroupDTO> createGroup(@Valid @ModelAttribute GroupDTO groupDto) {
         GroupEntity group = groupMapper.groupDTOToGroup(groupDto);
         GroupEntity savedGroup = groupService.save(group);
         return new ResponseEntity<>(groupMapper.groupToGroupDTO(savedGroup), HttpStatus.CREATED);
