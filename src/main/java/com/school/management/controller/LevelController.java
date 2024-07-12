@@ -1,7 +1,10 @@
 package com.school.management.controller;
 
+import com.school.management.dto.LevelDto;
+import com.school.management.mapper.LeveLMapper;
 import com.school.management.persistance.LevelEntity;
 import com.school.management.service.LevelService;
+import com.school.management.service.exception.CustomServiceException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,12 +14,15 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/levels")
 public class LevelController {
+    private static final String LEVEL_NOT_FOUND_MESSAGE = "Level not found with id: ";
 
     private final LevelService levelService;
+    private final LeveLMapper leveLMapper;
 
     @Autowired
-    public LevelController(LevelService levelService) {
+    public LevelController(LevelService levelService, LeveLMapper leveLMapper) {
         this.levelService = levelService;
+        this.leveLMapper = leveLMapper;
     }
 
     @GetMapping
@@ -24,6 +30,13 @@ public class LevelController {
 
         return ResponseEntity.ok(levelService.getAllLevels());
 
+    }
+
+    @GetMapping("id/{id}")
+    public ResponseEntity<LevelDto> getLevelById(@PathVariable Long id) {
+        LevelEntity level = levelService.findById(id)
+                .orElseThrow(() -> new CustomServiceException(LEVEL_NOT_FOUND_MESSAGE + id));
+        return ResponseEntity.ok(leveLMapper.toDto(level));
     }
 
     @PostMapping
