@@ -76,14 +76,16 @@ public class PaymentService {
         return paymentRepository.save(payment);
     }
 
-  public PaymentEntity processPayment(Long studentId, Long groupId, Long seriesId, double amountPaid) {
-    var student = getStudent(studentId);
-    var group = getGroup(groupId);
-    var series = getSessionSeries(seriesId);
-    var payment = getOrCreatePayment(student, group, series, amountPaid, seriesId); // Pass seriesId to getOrCreatePayment
+    public PaymentEntity processPayment(Long studentId, Long groupId, Long seriesId, double amountPaid) {
+        var student = getStudent(studentId);
+        var group = getGroup(groupId);
+        var series = getSessionSeries(seriesId);
+        var payment = getOrCreatePayment(student, group, series, amountPaid, seriesId);
 
-    return paymentRepository.save(payment);
-}
+        // Update the status of the payment after distribution
+        payment.setStatus(payment.getAmountPaid() >= calculateTotalCost(group) ? completed : "In Progress");
+        return paymentRepository.save(payment);
+    }
 
     private SessionSeriesEntity getSessionSeries(Long seriesId) {
         return sessionSeriesRepository.findById(seriesId)
@@ -101,28 +103,47 @@ public class PaymentService {
     }
 
     private PaymentEntity getOrCreatePayment(StudentEntity student, GroupEntity group, SessionSeriesEntity series, double amountPaid, Long seriesId) {
-    var existingPayment = paymentRepository.findByStudentIdAndGroupIdAndSessionSeriesId(student.getId(), group.getId(), series.getId());
-    double totalCost = calculateTotalCost(group);
+        var existingPayment = paymentRepository.findByStudentIdAndGroupIdAndSessionSeriesId(student.getId(), group.getId(), series.getId());
+        double totalCost = calculateTotalCost(group);
+        double surplus = 0.0;
+        PaymentEntity payment;
 
-    if (existingPayment.isPresent()) {
-        return getPaymentEntity(amountPaid, existingPayment, totalCost, seriesId);
-    } else {
-        if (amountPaid > totalCost) {
-            // Si le premier paiement dépasse le coût total, lancez une exception.
-            throw new CustomServiceException("Le montant du paiement ne peut pas dépasser le coût total de la série.");
+        if (existingPayment.isPresent()) {
+            payment = existingPayment.get();
+            double newTotalAmount = payment.getAmountPaid() + amountPaid;
+
+            if (newTotalAmount > totalCost) {
+                surplus = newTotalAmount - totalCost;
+                amountPaid = totalCost - payment.getAmountPaid(); // Ajuster le montant à distribuer
+                payment.setAmountPaid(totalCost);
+                payment.setStatus(completed);
+            } else {
+                payment.setAmountPaid(newTotalAmount);
+            }
+        } else {
+            payment = new PaymentEntity();
+            payment.setStudent(student);
+            payment.setGroup(group);
+            payment.setSessionSeries(series);
+            payment.setAmountPaid(Math.min(amountPaid, totalCost));
+            payment.setStatus(amountPaid >= totalCost ? completed : "In Progress");
+            amountPaid = Math.min(amountPaid, totalCost);
         }
 
-        PaymentEntity newPayment = new PaymentEntity();
-        newPayment.setStudent(student);
-        newPayment.setGroup(group);
-        newPayment.setSessionSeries(series);
-        newPayment.setAmountPaid(amountPaid);
-        newPayment.setStatus(amountPaid >= totalCost ? completed : "In Progress");
-        return newPayment;
-    }
-}
+        paymentRepository.save(payment);
 
-   private PaymentEntity getPaymentEntity(double amountPaid, Optional<PaymentEntity> existingPayment, double totalCost, Long seriesId) {
+        // Distribuer le paiement après avoir mis à jour l'entité de paiement
+        distributePayment(payment, seriesId, amountPaid);
+
+        if (surplus > 0) {
+            throw new CustomServiceException("Le paiement a été complété. Le montant excédentaire de " + surplus + " euros sera remboursé.", HttpStatus.OK);
+        }
+
+        return payment;
+    }
+
+
+    private PaymentEntity getPaymentEntity(double amountPaid, Optional<PaymentEntity> existingPayment, double totalCost, Long seriesId) {
     if(existingPayment.isEmpty()) {
         throw new CustomServiceException("Payment NOT FOUND", HttpStatus.NOT_FOUND);
     }
@@ -139,12 +160,9 @@ public class PaymentService {
 
     payment.setStatus(newTotalAmount >= totalCost ? completed : "In Progress");
     return payment;
-}
+    }
 
     private void distributePayment(PaymentEntity payment, Long seriesId, double amountPaid) {
-        if (payment.getStatus().equals(completed)) {
-            throw new CustomServiceException("Le paiement pour cette série est déjà complet. Aucune mise à jour supplémentaire n'est autorisée.", HttpStatus.BAD_REQUEST);
-        }
         var sessions = getSessionsForSeries(seriesId);
         var remainingAmount = amountPaid;
 
@@ -153,6 +171,7 @@ public class PaymentService {
             if (remainingAmount <= 0) break;
         }
     }
+
 
     private List<SessionEntity> getSessionsForSeries(Long seriesId) {
         SessionSeriesEntity series = sessionSeriesRepository.findById(seriesId)
@@ -173,21 +192,22 @@ public class PaymentService {
             double amountToAdd = Math.min(pricePerSession - existingDetail.getAmountPaid(), remainingAmount);
             if (amountToAdd > 0) {
                 existingDetail.setAmountPaid(existingDetail.getAmountPaid() + amountToAdd);
-                return remainingAmount - amountToAdd;
+                paymentDetailRepository.save(existingDetail);
+                remainingAmount -= amountToAdd;
             }
-        }
-
-        else if (remainingAmount > 0) {
+        } else if (remainingAmount > 0) {
             double amountToPay = Math.min(pricePerSession, remainingAmount);
             var newDetail = new PaymentDetailEntity();
             newDetail.setAmountPaid(amountToPay);
             newDetail.setPayment(payment);
             newDetail.setSession(session);
             payment.getPaymentDetails().add(newDetail);
-            return remainingAmount - amountToPay;
+            paymentDetailRepository.save(newDetail);
+            remainingAmount -= amountToPay;
         }
         return remainingAmount;
     }
+
 
     @Transactional
     public List<StudentPaymentStatus> getPaymentStatusForGroup(Long groupId) {
