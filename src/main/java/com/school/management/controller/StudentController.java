@@ -187,5 +187,10 @@ public class StudentController {
         return ResponseEntity.ok(groupDTOs);
     }
 
-
+    // desactivate user
+    @DeleteMapping("/disable/{id}")
+    public ResponseEntity<Boolean> desactivateStudent(@PathVariable Long id) {
+        studentService.desactivateStudent(id);
+        return ResponseEntity.ok(true);
+    }
 }

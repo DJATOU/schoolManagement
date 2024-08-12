@@ -100,4 +100,12 @@ public class GroupServiceImpl implements GroupService {
         TypedQuery<GroupEntity> query = entityManager.createQuery(cq);
         return query.getResultList();
     }
+
+    @Override
+    public void desactivateGroup(Long id) {
+        groupRepository.findById(id).ifPresent(group -> {
+            group.setActive(false);
+            groupRepository.save(group);
+        });
+    }
 }

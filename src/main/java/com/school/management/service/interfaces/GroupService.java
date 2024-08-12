@@ -8,4 +8,5 @@ import java.util.List;
 public interface GroupService {
     List<GroupDTO> searchGroupsByNameStartingWithDTO(String name);
     List<GroupEntity> searchGroupsByNameStartingWith(String input);
+    void desactivateGroup(Long id);
 }

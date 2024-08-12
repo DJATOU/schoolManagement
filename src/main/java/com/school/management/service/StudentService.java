@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
@@ -196,4 +195,10 @@ public class StudentService {
         return studentRepository.findByEstablishment(establishment);
     }
 
+    public void desactivateStudent(Long id) {
+        studentRepository.findById(id).ifPresent(student -> {
+            student.setActive(false);
+            studentRepository.save(student);
+        });
+    }
 }

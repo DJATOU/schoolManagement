@@ -1,9 +1,7 @@
 package com.school.management.service;
 
 import com.school.management.dto.TeacherDTO;
-import com.school.management.mapper.StudentMapper;
 import com.school.management.mapper.TeacherMapper;
-import com.school.management.persistance.StudentEntity;
 import com.school.management.persistance.TeacherEntity;
 import com.school.management.repository.TeacherRepository;
 import com.school.management.service.exception.CustomServiceException;
@@ -129,6 +127,13 @@ public class TeacherService {
         } catch (DataAccessException e) {
             throw new CustomServiceException("Error fetching teacher with ID " + id, e);
         }
+    }
+
+    public void desactivateTeacher(Long id) {
+        teacherRepository.findById(id).ifPresent(teacher -> {
+            teacher.setActive(false);
+            teacherRepository.save(teacher);
+        });
     }
 }
 

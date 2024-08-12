@@ -51,7 +51,7 @@ public class LevelController {
     }
 
     //descactivate levels
-    @DeleteMapping("/{id_list}")
+    @DeleteMapping("disable/{id_list}")
     public ResponseEntity<Boolean> desactivateLevels(@PathVariable String id_list) {
         System.out.println("Request recieved: " + id_list);
         for (String id : id_list.split(",")) {
