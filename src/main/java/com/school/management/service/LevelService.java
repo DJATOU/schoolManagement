@@ -44,4 +44,10 @@ public class LevelService {
         return levelRepository.save(levelToUpdate);
     }
 
+    public void desactivateLevel(Long id) {
+        levelRepository.findById(id).ifPresent(level -> {
+            level.setActive(false);
+            levelRepository.save(level);
+        });
+    }
 }
