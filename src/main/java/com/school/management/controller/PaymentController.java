@@ -1,6 +1,8 @@
 package com.school.management.controller;
 
+import ch.qos.logback.core.net.SyslogOutputStream;
 import com.school.management.dto.PaymentDTO;
+import com.school.management.dto.PaymentDetailDTO;
 import com.school.management.dto.StudentPaymentStatusDTO;
 import com.school.management.dto.session.SessionDTO;
 import com.school.management.mapper.SessionMapper;
@@ -207,6 +209,23 @@ public class PaymentController {
     public ResponseEntity<List<GroupPaymentStatus>> getStudentPaymentStatus(@PathVariable Long studentId) {
         List<GroupPaymentStatus> paymentStatus = paymentService.getPaymentStatusForStudent(studentId);
         return ResponseEntity.ok(paymentStatus);
+    }
+
+    @GetMapping("/process/{studentId}/series/{seriesId}/payment-details")
+    public ResponseEntity<List<PaymentDetailDTO>> getPaymentDetailsForSeries(
+            @PathVariable Long studentId,
+            @PathVariable Long seriesId) {
+        List<PaymentDetailDTO> paymentDetails = paymentService.getPaymentDetailsForSeries(studentId, seriesId);
+        return ResponseEntity.ok(paymentDetails);
+    }
+
+    @GetMapping("/process/{studentId}/series/{seriesId}/payment-history")
+    public ResponseEntity<List<PaymentDTO>> getPaymentHistoryForSeries(
+            @PathVariable Long studentId,
+            @PathVariable Long seriesId) {
+        List<PaymentDTO> paymentHistory = paymentService.getPaymentHistoryForSeries(studentId, seriesId);
+        int x = 0;
+        return ResponseEntity.ok(paymentHistory);
     }
 
 }

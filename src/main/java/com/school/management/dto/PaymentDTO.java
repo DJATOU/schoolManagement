@@ -34,5 +34,10 @@ public class PaymentDTO {
     @NotBlank(message = "Group ID cannot be null")
     private Long groupId;
 
+    // Additional fields for detailed information
+    private Double totalSeriesCost;
+    private Double totalPaidForSeries;
+    private Double amountOwed;
+
 
 }
