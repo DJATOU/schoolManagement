@@ -23,7 +23,7 @@ public class GroupTypeController {
     // Get all group types
     @GetMapping
     public ResponseEntity<List<GroupTypeEntity>> getAllGroupTypes() {
-        return ResponseEntity.ok(groupTypeRepository.findAll());
+        return ResponseEntity.ok(groupTypeRepository.findAll().stream().filter(GroupTypeEntity::isActive).toList());
     }
 
     // Get a single group type by ID
@@ -53,7 +53,7 @@ public class GroupTypeController {
                 })
                 .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
-
+/*
     // Delete a group type
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteGroupType(@PathVariable Long id) {
@@ -63,6 +63,18 @@ public class GroupTypeController {
                     return ResponseEntity.noContent().build(); // Returns ResponseEntity<HttpStatus>
                 })
                 .orElse(ResponseEntity.notFound().build()); // Also returns ResponseEntity<HttpStatus>
+    }
+*/
+    @DeleteMapping("disable/{id_list}")
+    public ResponseEntity<Boolean> disableGroupType(@PathVariable String id_list) {
+        System.out.println("Request recieved: " + id_list);
+        for (String id : id_list.split(",")) {
+            groupTypeRepository.findById(Long.parseLong(id)).ifPresent(groupType -> {
+                groupType.setActive(false);
+                groupTypeRepository.save(groupType);
+            });
+        }
+        return ResponseEntity.ok(true);
     }
 }
 

@@ -17,8 +17,9 @@ public class SubjectService {
         this.subjectRepository = subjectRepository;
     }
 
+    // return all subjects which are active
     public List<SubjectEntity> getAllSubjects() {
-        return subjectRepository.findAll();
+        return subjectRepository.findAll().stream().filter(SubjectEntity::isActive).toList();
     }
 
     // create a new subject
@@ -32,4 +33,9 @@ public class SubjectService {
         return subjectRepository.save(subjectToUpdate);
     }
 
+    public void disableSubjects(long subjectId) {
+        SubjectEntity subject = subjectRepository.findById(subjectId).orElseThrow();
+        subject.setActive(false);
+        subjectRepository.save(subject);
+    }
 }

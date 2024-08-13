@@ -48,4 +48,8 @@ public abstract class BaseEntity {
     protected void onUpdate() {
         dateUpdate = LocalDateTime.now();
     }
+
+    public boolean isActive() {
+        return active;
+    }
 }

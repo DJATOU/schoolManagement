@@ -34,5 +34,14 @@ public class SubjectController {
         return ResponseEntity.ok(subjectService.updateSubject(id, subject));
     }
 
+    //disable subjects
+    @DeleteMapping("disable/{id_list}")
+    public ResponseEntity<Boolean> disableSubjects(@PathVariable String id_list) {
+        System.out.println("Request recieved: " + id_list);
+        for (String id : id_list.split(",")) {
+            subjectService.disableSubjects(Long.parseLong(id));
+        }
+        return ResponseEntity.ok(true);
+    }
 
 }
