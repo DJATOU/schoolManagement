@@ -22,6 +22,7 @@ import java.util.*;
 public class SessionService {
 
     private static final String SESSION_NOT_FOUND_MESSAGE = "Session not found with id: ";
+    private static final String GROUPID = "groupId";
     private final SessionRepository sessionRepository;
     private final GroupRepository groupRepository;
     private final PatchService patchService;
@@ -56,8 +57,8 @@ public class SessionService {
         SessionEntity session = getSessionById(sessionId)
                 .orElseThrow(() -> new EntityNotFoundException(SESSION_NOT_FOUND_MESSAGE + sessionId));
 
-        if (updates.containsKey("groupId")) {
-            Object groupIdObj = updates.get("groupId");
+        if (updates.containsKey(GROUPID)) {
+            Object groupIdObj = updates.get(GROUPID);
 
             Long groupId = null;
             if (groupIdObj != null) {
@@ -69,7 +70,7 @@ public class SessionService {
             }
 
             updateGroup(session, groupId);
-            updates.remove("groupId");
+            updates.remove(GROUPID);
         }
 
 
@@ -109,8 +110,15 @@ public class SessionService {
     @Transactional
     public SessionEntity markSessionAsFinished(Long sessionId) {
         SessionEntity session = sessionRepository.findById(sessionId)
-                .orElseThrow(() -> new CustomServiceException("Session not found with id: " + sessionId));
+                .orElseThrow(() -> new CustomServiceException(SESSION_NOT_FOUND_MESSAGE + sessionId));
         session.setIsFinished(true);
+        return sessionRepository.save(session);
+    }
+
+    public SessionEntity markSessionAsUnfinished(Long sessionId) {
+        SessionEntity session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new CustomServiceException(SESSION_NOT_FOUND_MESSAGE + sessionId));
+        session.setIsFinished(false);
         return sessionRepository.save(session);
     }
 
@@ -133,4 +141,6 @@ public class SessionService {
                 .map(sessionMapper::sessionEntityToSessionDto)
                 .toList();
     }
+
+
 }

@@ -94,5 +94,11 @@ public class AttendanceController {
         return ResponseEntity.ok(attendances);
     }
 
+    @DeleteMapping("/session/{sessionId}")
+    public ResponseEntity<Void> deleteAttendanceBySessionId(@PathVariable Long sessionId) {
+        attendanceService.deleteBySessionId(sessionId);
+        return ResponseEntity.noContent().build();
+    }
+
 
 }

@@ -27,4 +27,5 @@ public interface SessionRepository extends JpaRepository<SessionEntity, Long>, J
 
     List<SessionEntity> findByGroupIdAndSessionTimeStartBetween(Long groupId, LocalDateTime start, LocalDateTime end);
 
+    int countBySessionSeriesId(Long seriesId);
 }

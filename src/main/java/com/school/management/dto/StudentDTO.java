@@ -2,6 +2,7 @@ package com.school.management.dto;
 
 import jakarta.validation.constraints.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.util.Date;
 import java.util.Set;
@@ -10,7 +11,7 @@ import java.util.Set;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@SuperBuilder
 public class StudentDTO {
 
     Long id;
@@ -37,7 +38,7 @@ public class StudentDTO {
     private String photo;
 
     @NotNull(message = "Level is required")
-    private String level;
+    private Long levelId; // Reference the level by its ID
 
     private Set<Long> groupIds; // Assuming groups are identified by their IDs
 

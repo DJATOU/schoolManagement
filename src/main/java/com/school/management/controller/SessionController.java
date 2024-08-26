@@ -4,6 +4,7 @@ import com.school.management.dto.session.SessionDTO;
 import com.school.management.dto.session.SessionSearchCriteriaDTO;
 import com.school.management.mapper.SessionMapper;
 import com.school.management.persistance.SessionEntity;
+import com.school.management.service.AttendanceService;
 import com.school.management.service.SessionService;
 import com.school.management.service.exception.CustomServiceException;
 import jakarta.validation.Valid;
@@ -25,11 +26,10 @@ public class SessionController {
     private final SessionService sessionService;
 
 
-
     private final SessionMapper sessionMapper;
 
     @Autowired
-    public SessionController(SessionService sessionService, SessionMapper sessionMapper){
+    public SessionController(SessionService sessionService, SessionMapper sessionMapper, AttendanceService attendanceService){
         this.sessionService = sessionService;
         this.sessionMapper = sessionMapper;
     }
@@ -99,6 +99,13 @@ public class SessionController {
         SessionEntity updatedSession = sessionService.markSessionAsFinished(sessionId);
         return ResponseEntity.ok(sessionMapper.sessionEntityToSessionDto(updatedSession));
     }
+
+    @PatchMapping("/{sessionId}/unfinish")
+    public ResponseEntity<SessionDTO> markSessionAsUnfinished(@PathVariable Long sessionId) {
+        SessionEntity updatedSession = sessionService.markSessionAsUnfinished(sessionId);
+        return ResponseEntity.ok(sessionMapper.sessionEntityToSessionDto(updatedSession));
+    }
+
 
     @GetMapping("/series/{seriesId}")
     public ResponseEntity<List<SessionDTO>> getSessionsBySeriesId(@PathVariable Long seriesId) {

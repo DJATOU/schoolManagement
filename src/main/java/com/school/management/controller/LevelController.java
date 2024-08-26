@@ -39,6 +39,7 @@ public class LevelController {
         return ResponseEntity.ok(leveLMapper.toDto(level));
     }
 
+
     @PostMapping
     public ResponseEntity<LevelEntity> createLevel(@RequestBody LevelEntity level) {
         return ResponseEntity.ok(levelService.createLevel(level));

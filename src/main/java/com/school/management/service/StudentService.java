@@ -23,17 +23,20 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
 public class StudentService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StudentService.class);
+
+    private static final String LASTNAME = "lastName";
+
+    private static final String FIRSTNAME = "firstName";
     @PersistenceContext
     private EntityManager entityManager;
     private final StudentRepository studentRepository;
-    private final String BASE_PHOTO_URL = "http://localhost:8080/personne/";
+    private static final String basePhotoUrl = "http://localhost:8080/personne/";
     private StudentMapper studentMapper;
 
     @Autowired
@@ -63,33 +66,14 @@ public class StudentService {
     }
 
     @Transactional
-    public void delete(Long id) {
-        studentRepository.deleteById(id);
-    }
-
-    @Transactional
-    public void update(Long id) {
-        studentRepository.updateById(id);
-    }
-
-    public void updateStudentScore(Long studentId, Double newScore) {
-        StudentEntity student = studentRepository.findById(studentId)
-                .orElseThrow(() -> new CustomServiceException("Student not found"));
-
-        // Business logic
-        student.setAverageScore(newScore);
-        studentRepository.save(student);
-    }
-
-    @Transactional
-    public List<StudentEntity> searchStudents(String firstName, String lastName, String level, Long groupId, String establishment) {
+    public List<StudentEntity> searchStudents(String firstName, String lastName, Long level, Long groupId, String establishment) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<StudentEntity> cq = cb.createQuery(StudentEntity.class);
         Root<StudentEntity> student = cq.from(StudentEntity.class);
 
         Predicate[] predicates = Stream.of(
-                        buildPredicate(firstName, name -> cb.equal(cb.lower(student.get("firstName")), name.toLowerCase())),
-                        buildPredicate(lastName, name -> cb.equal(cb.lower(student.get("lastName")), name.toLowerCase())),
+                        buildPredicate(firstName, name -> cb.equal(cb.lower(student.get(FIRSTNAME)), name.toLowerCase())),
+                        buildPredicate(lastName, name -> cb.equal(cb.lower(student.get(LASTNAME)), name.toLowerCase())),
                         buildPredicate(level, lev -> cb.equal(student.get("level"), lev)),
                         buildPredicate(groupId, id -> {
                             Join<StudentEntity, GroupEntity> groupsJoin = student.join("groups");
@@ -117,15 +101,15 @@ public class StudentService {
         if (nameParts.length == 1) {
             String pattern = nameParts[0] + "%";
             // Search either first or last name if only one name part is provided
-            Predicate firstNamePredicate = cb.like(cb.lower(student.get("firstName")), pattern);
-            Predicate lastNamePredicate = cb.like(cb.lower(student.get("lastName")), pattern);
+            Predicate firstNamePredicate = cb.like(cb.lower(student.get(FIRSTNAME)), pattern);
+            Predicate lastNamePredicate = cb.like(cb.lower(student.get(LASTNAME)), pattern);
             finalPredicate = cb.or(firstNamePredicate, lastNamePredicate);
         } else {
             // Assume the first part is the first name and the second part is the last name for simplicity
             String firstNamePattern = nameParts[0] + "%";
             String lastNamePattern = nameParts[1] + "%";
-            Predicate firstNamePredicate = cb.like(cb.lower(student.get("firstName")), firstNamePattern);
-            Predicate lastNamePredicate = cb.like(cb.lower(student.get("lastName")), lastNamePattern);
+            Predicate firstNamePredicate = cb.like(cb.lower(student.get(FIRSTNAME)), firstNamePattern);
+            Predicate lastNamePredicate = cb.like(cb.lower(student.get(LASTNAME)), lastNamePattern);
 
             // Apply both conditions
             finalPredicate = cb.and(firstNamePredicate, lastNamePredicate);
@@ -148,7 +132,7 @@ public class StudentService {
                     if (entity.getPhoto() != null && !entity.getPhoto().isEmpty()) {
                         Path photoPath = Paths.get(entity.getPhoto());
                         String photoName = photoPath.getFileName().toString();
-                        String photoUrl = BASE_PHOTO_URL + photoName;
+                        String photoUrl = basePhotoUrl + photoName;
                         dto.setPhoto(photoUrl);
                     }
                     return dto;
@@ -177,18 +161,8 @@ public class StudentService {
     }
 
     @Transactional(readOnly = true)
-    public long countByGroupsId(Long groupId) {
-        return studentRepository.countByGroups_Id(groupId);
-    }
-
-    @Transactional(readOnly = true)
-    public long countByLevel(String level) {
-        return studentRepository.countByLevel(level);
-    }
-
-    @Transactional(readOnly = true)
-    public List<StudentEntity> findByLevel(String level) {
-        return studentRepository.findByLevel(level);
+    public List<StudentEntity> findByLevel(Long level) {
+        return studentRepository.findByLevelId(level);
     }
 
     @Transactional(readOnly = true)
@@ -196,4 +170,7 @@ public class StudentService {
         return studentRepository.findByEstablishment(establishment);
     }
 
+    public List<StudentEntity> findAllActiveStudents() {
+        return studentRepository.findAllByActiveTrue();
+    }
 }

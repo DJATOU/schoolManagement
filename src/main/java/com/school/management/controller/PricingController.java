@@ -34,4 +34,15 @@ public class PricingController {
         return ResponseEntity.ok(pricingService.updatePricing(id, pricing));
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<PricingEntity> getPricingById(@PathVariable Long id) {
+        PricingEntity pricing = pricingService.getPricingById(id);
+        if (pricing != null) {
+            return ResponseEntity.ok(pricing);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+
 }

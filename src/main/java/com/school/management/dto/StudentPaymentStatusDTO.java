@@ -36,7 +36,7 @@ public class StudentPaymentStatusDTO {
     private byte[] photo;
 
     @NotNull(message = "Level is required")
-    private String level;
+    private Long level;
 
     // Getters and setters
 }

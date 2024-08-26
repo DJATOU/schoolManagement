@@ -1,13 +1,14 @@
 package com.school.management.controller;
 
-import ch.qos.logback.core.net.SyslogOutputStream;
 import com.school.management.dto.PaymentDTO;
 import com.school.management.dto.PaymentDetailDTO;
-import com.school.management.dto.StudentPaymentStatusDTO;
 import com.school.management.dto.session.SessionDTO;
 import com.school.management.mapper.SessionMapper;
 import com.school.management.persistance.*;
-import com.school.management.repository.*;
+import com.school.management.repository.GroupRepository;
+import com.school.management.repository.SessionRepository;
+import com.school.management.repository.SessionSeriesRepository;
+import com.school.management.repository.StudentRepository;
 import com.school.management.service.GroupPaymentStatus;
 import com.school.management.service.PatchService;
 import com.school.management.service.PaymentService;
@@ -19,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 import java.util.Map;
 
@@ -185,7 +187,7 @@ public class PaymentController {
                         status.getDateOfBirth(),
                         status.getPlaceOfBirth(),
                         status.getPhoto(),
-                        status.getLevel(),
+                        status.getLevelId(),
                         status.getGroupIds(),
                         status.getTutorId(),
                         status.getEstablishment(),
@@ -224,7 +226,6 @@ public class PaymentController {
             @PathVariable Long studentId,
             @PathVariable Long seriesId) {
         List<PaymentDTO> paymentHistory = paymentService.getPaymentHistoryForSeries(studentId, seriesId);
-        int x = 0;
         return ResponseEntity.ok(paymentHistory);
     }
 

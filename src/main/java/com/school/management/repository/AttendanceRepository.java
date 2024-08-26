@@ -21,5 +21,7 @@ public interface AttendanceRepository extends JpaRepository<AttendanceEntity, Lo
 
     @Query("SELECT a FROM AttendanceEntity a WHERE a.session.id = :sessionId")
     List<AttendanceEntity> findBySessionId(@Param("sessionId") Long sessionId);
+
+    void deleteBySessionId(Long sessionId);
 }
 

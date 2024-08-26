@@ -11,59 +11,8 @@ import java.util.Optional;
 
 @Repository
 public interface PaymentRepository extends JpaRepository<PaymentEntity, Long> {
-    // You can add custom query methods here if needed
-    @Query("SELECT SUM(p.amountPaid) FROM PaymentEntity p WHERE p.student.id = :studentId")
-    Double sumPaymentsForStudent(Long studentId);
-;
-   /* @Query("SELECT SUM(p.amountPaid) FROM PaymentEntity p WHERE p.student.id = :studentId")
-    Double sumPaymentsByStudentId(Long studentId);
-
-    @Query("SELECT SUM(p.amountPaid) FROM PaymentEntity p WHERE p.student.id = :studentId AND p.session.id = :sessionId")
-    Double sumPaymentsForStudentBySession(Long studentId, Long sessionId);
-
-    @Query("SELECT SUM(p.amountPaid) FROM PaymentEntity p WHERE p.student.id = :studentId AND p.session.id = :sessionId AND p.active = true")
-    Double sumPaymentsForStudentBySessionAndActive(Long studentId, Long sessionId);
-
-    @Query("SELECT SUM(p.amountPaid) FROM PaymentEntity p WHERE p.student.id = :studentId AND p.session.id = :sessionId AND p.active = false")
-    Double sumPaymentsForStudentBySessionAndInactive(Long studentId, Long sessionId);
-
-    @Query("SELECT SUM(p.amountPaid) FROM PaymentEntity p WHERE p.student.id = :studentId AND p.active = true")
-    Double sumPaymentsForStudentAndActive(Long studentId);
-
-    @Query("SELECT SUM(p.amountPaid) FROM PaymentEntity p WHERE p.student.id = :studentId AND p.active = false")
-    Double sumPaymentsForStudentAndInactive(Long studentId);
-
-    @Query("SELECT SUM(p.amountPaid) FROM PaymentEntity p WHERE p.session.id = :sessionId AND p.active = true")
-    Double sumPaymentsForSessionAndActive(Long sessionId);
-
-    @Query("SELECT SUM(p.amountPaid) FROM PaymentEntity p WHERE p.session.id = :sessionId AND p.active = false")
-    Double sumPaymentsForSessionAndInactive(Long sessionId);
-
-    @Query("SELECT SUM(p.amountPaid) FROM PaymentEntity p WHERE p.active = true")
-    Double sumPaymentsForActive();
-
-    @Query("SELECT SUM(p.amountPaid) FROM PaymentEntity p WHERE p.active = false")
-    Double sumPaymentsForInactive();
-
-    @Query("SELECT SUM(p.amountPaid) FROM PaymentEntity p WHERE p.session.id = :sessionId")
-    Double sumPaymentsForSession(Long sessionId);
-
-    @Query("SELECT SUM(p.amountPaid) FROM PaymentEntity p")
-    Double sumPayments();
-
-    @Query("SELECT SUM(p.amountPaid) FROM PaymentEntity p WHERE p.student.id = :studentId AND p.session.id = :sessionId AND p.active = true")
-    Double sumPaymentsForStudentBySessionAndActiveAndActive(Long studentId, Long sessionId);
-
-    @Query("SELECT SUM(p.amountPaid) FROM PaymentEntity p WHERE p.student.id = :studentId AND p.session.id = :sessionId AND p.active = false")
-    Double sumPaymentsForStudentBySessionAndInactiveAndActive(Long studentId, Long sessionId);*/
-
-    //@Query("SELECT SUM(p.amountPaid) FROM PaymentEntity p WHERE p.student.id = :studentId AND p.active = true")
-    List<PaymentEntity> findAllByStudentId(Long studentId);
 
     List<PaymentEntity> findAllByStudentIdOrderByPaymentDateDesc(Long studentId);
-
-
-    Optional<PaymentEntity> findByStudentIdAndGroupId(Long studentId, Long groupId);
 
     Optional<PaymentEntity> findByStudentIdAndGroupIdAndSessionSeriesId(Long studentId, Long groupId, Long seriesId);
 
@@ -72,4 +21,5 @@ public interface PaymentRepository extends JpaRepository<PaymentEntity, Long> {
 
     @Query("SELECT p FROM PaymentEntity p WHERE p.student.id = :studentId AND p.sessionSeries.id = :seriesId")
     List<PaymentEntity> findAllByStudentIdAndSessionSeriesId(Long studentId, Long seriesId);
+
 }

@@ -32,4 +32,7 @@ public class PricingService {
     }
 
 
+    public PricingEntity getPricingById(Long id) {
+        return pricingRepository.findById(id).orElse(null);
+    }
 }

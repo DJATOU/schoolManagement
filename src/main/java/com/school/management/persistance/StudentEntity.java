@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,9 +21,9 @@ import java.util.Set;
 @SuperBuilder
 public class StudentEntity extends PersonEntity {
 
-    @Column(name = "level")
-    @NotNull
-    private String level;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "level_id")
+    private LevelEntity level; // Reference to LevelEntity
 
     @ManyToMany
     @JoinTable(

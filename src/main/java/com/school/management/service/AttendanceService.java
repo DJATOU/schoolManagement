@@ -6,6 +6,8 @@ import com.school.management.persistance.AttendanceEntity;
 import com.school.management.repository.AttendanceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 
 @Service
@@ -72,5 +74,11 @@ public class AttendanceService {
                 .toList();
     }
 
+
+
+    @Transactional
+    public void deleteBySessionId(Long sessionId) {
+        attendanceRepository.deleteBySessionId(sessionId);
+    }
     // Additional methods as needed...
 }

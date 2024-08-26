@@ -6,7 +6,6 @@ import com.school.management.mapper.GroupMapper;
 import com.school.management.mapper.StudentMapper;
 import com.school.management.persistance.StudentEntity;
 import com.school.management.persistance.TutorEntity;
-import com.school.management.service.PatchService;
 import com.school.management.service.StudentService;
 import com.school.management.service.exception.CustomServiceException;
 import jakarta.validation.Valid;
@@ -42,7 +41,7 @@ public class StudentController {
     private final GroupMapper groupMapper;
 
     @Autowired
-    public StudentController(StudentService studentService, StudentMapper studentMapper, PatchService patchService, GroupMapper groupMapper) {
+    public StudentController(StudentService studentService, StudentMapper studentMapper, GroupMapper groupMapper) {
         this.studentService = studentService;
         this.studentMapper = studentMapper;
         this.groupMapper = groupMapper;
@@ -88,21 +87,22 @@ public class StudentController {
         return ResponseEntity.ok(studentMapper.studentToStudentDTO(updatedStudent));
     }
 
-   @Transactional(readOnly = true)
-   @GetMapping
+    @Transactional(readOnly = true)
+    @GetMapping
     public ResponseEntity<List<StudentDTO>> getAllStudents() {
-        List<StudentDTO> students;
-        students = studentService.findAll().stream()
+        List<StudentDTO> students = studentService.findAllActiveStudents().stream()
                 .map(studentMapper::studentToStudentDTO)
                 .toList();
         return ResponseEntity.ok(students);
     }
+
+
     @Transactional(readOnly = true)
     @GetMapping("/search")
     public ResponseEntity<List<StudentDTO>> searchStudents(
             @RequestParam(required = false) String firstName,
             @RequestParam(required = false) String lastName,
-            @RequestParam(required = false) String level,
+            @RequestParam(required = false) Long level,
             @RequestParam(required = false) Long groupId,
             @RequestParam(required = false) String establishment) {
 
@@ -118,7 +118,8 @@ public class StudentController {
     public ResponseEntity<StudentDTO> getStudentById(@PathVariable Long id) {
         StudentEntity student = studentService.findById(id)
                 .orElseThrow(() -> new CustomServiceException(STUDENT_NOT_FOUND_MESSAGE + id));
-        return ResponseEntity.ok(studentMapper.studentToStudentDTO(student));
+        StudentDTO studentDto = studentMapper.studentToStudentDTO(student);
+        return ResponseEntity.ok(studentDto);
     }
 
     @GetMapping("/groups/{groupId}")
@@ -130,12 +131,15 @@ public class StudentController {
     }
 
     @GetMapping("/levels/{level}")
-    public ResponseEntity<List<StudentDTO>> getStudentsByLevel(@PathVariable String level) {
+    public ResponseEntity<List<StudentDTO>> getStudentsByLevel(@PathVariable long level) {
         List<StudentDTO> students = studentService.findByLevel(level).stream()
+                .filter(student -> Boolean.TRUE.equals(student.getActive())) // Filtrer les étudiants actifs
                 .map(studentMapper::studentToStudentDTO)
                 .toList();
         return ResponseEntity.ok(students);
     }
+
+
 
     @GetMapping("/establishments/{establishment}")
     public ResponseEntity<List<StudentDTO>> getStudentsByEstablishment(@PathVariable String establishment) {

@@ -9,6 +9,7 @@ import java.util.Set;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
 public class StudentPaymentStatus extends StudentDTO {
     private boolean isPaymentOverdue;
 
@@ -22,7 +23,7 @@ public class StudentPaymentStatus extends StudentDTO {
             Date dateOfBirth,
             String placeOfBirth,
             String photo,
-            String level,
+            Long level,
             Set<Long> groupIds,
             Long tutorId,
             String establishment,

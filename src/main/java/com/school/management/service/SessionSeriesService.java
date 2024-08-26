@@ -35,10 +35,6 @@ public class SessionSeriesService {
         return sessionSeriesRepository.save(sessionSeries);
     }
 
-    public void deleteSessionSeries(Long id) {
-        sessionSeriesRepository.deleteById(id);
-    }
-
     public List<SessionSeriesDto> getSeriesByGroupId(Long groupId) {
         return sessionSeriesRepository.findByGroupId(groupId).stream()
                 .map(sessionSeriesMapper::toDto)

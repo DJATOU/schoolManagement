@@ -22,4 +22,5 @@ public interface PaymentDetailRepository extends JpaRepository<PaymentDetailEnti
     @Query("SELECT pd FROM PaymentDetailEntity pd WHERE pd.payment.student.id = :studentId AND pd.session.sessionSeries.id = :seriesId")
     List<PaymentDetailEntity> findByPayment_StudentIdAndSession_SessionSeriesId(@Param("studentId") Long studentId, @Param("seriesId") Long seriesId);
 
+
 }
