@@ -22,7 +22,7 @@ public class LevelService {
     }
 
     public List<LevelEntity> getAllLevels() {
-        return levelRepository.findAll();
+        return levelRepository.findAll().stream().filter(LevelEntity::isActive).toList();
     }
 
     @Transactional(readOnly = true)
@@ -44,4 +44,10 @@ public class LevelService {
         return levelRepository.save(levelToUpdate);
     }
 
+    public void disableLevels(Long id) {
+        levelRepository.findById(id).ifPresent(level -> {
+            level.setActive(false);
+            levelRepository.save(level);
+        });
+    }
 }

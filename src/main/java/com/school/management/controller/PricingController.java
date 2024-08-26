@@ -34,6 +34,16 @@ public class PricingController {
         return ResponseEntity.ok(pricingService.updatePricing(id, pricing));
     }
 
+    //disable pricings
+    @DeleteMapping("disable/{id_list}")
+    public ResponseEntity<Boolean> disablePricings(@PathVariable String id_list) {
+        System.out.println("Request recieved: " + id_list);
+        for (String id : id_list.split(",")) {
+            pricingService.disablePricings(Long.parseLong(id));
+        }
+        return ResponseEntity.ok(true);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<PricingEntity> getPricingById(@PathVariable Long id) {
         PricingEntity pricing = pricingService.getPricingById(id);

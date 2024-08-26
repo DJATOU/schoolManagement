@@ -51,4 +51,14 @@ public class LevelController {
         return ResponseEntity.ok(levelService.updateLevel(id, level));
     }
 
+    //descactivate levels
+    @DeleteMapping("disable/{id_list}")
+    public ResponseEntity<Boolean> disableLevels(@PathVariable String id_list) {
+        System.out.println("Request recieved: " + id_list);
+        for (String id : id_list.split(",")) {
+            System.out.println("id: " + id);
+            levelService.disableLevels(Long.parseLong(id));
+        }
+        return ResponseEntity.ok(true);
+    }
 }

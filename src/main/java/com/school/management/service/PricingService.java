@@ -18,7 +18,7 @@ public class PricingService {
     }
 
     public List<PricingEntity> getAllPricing() {
-        return pricingRepository.findAll();
+        return pricingRepository.findAll().stream().filter(PricingEntity::isActive).toList();
     }
 
     public PricingEntity createPricing(PricingEntity pricing) {
@@ -34,5 +34,10 @@ public class PricingService {
 
     public PricingEntity getPricingById(Long id) {
         return pricingRepository.findById(id).orElse(null);
+    }
+    public void disablePricings(long id) {
+        PricingEntity pricing = pricingRepository.findById(id).orElseThrow();
+        pricing.setActive(false);
+        pricingRepository.save(pricing);
     }
 }

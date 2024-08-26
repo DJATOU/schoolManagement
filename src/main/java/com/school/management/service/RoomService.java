@@ -1,5 +1,6 @@
 package com.school.management.service;
 
+import com.school.management.persistance.BaseEntity;
 import com.school.management.persistance.RoomEntity;
 import com.school.management.repository.RoomRepository;
 import jakarta.transaction.Transactional;
@@ -18,7 +19,7 @@ public class RoomService {
     }
 
     public List<RoomEntity> getAllRooms() {
-        return roomRepository.findAll();
+        return roomRepository.findAll().stream().filter(BaseEntity::isActive).toList();
     }
 
     public RoomEntity getRoomById(Long id) {
@@ -39,9 +40,14 @@ public class RoomService {
     }
 
 
-    public void deleteRoom(Long id) {
+    /*public void deleteRoom(Long id) {
         roomRepository.deleteById(id);
+    }*/
+
+
+    public void disableRooms(long id) {
+        RoomEntity room = getRoomById(id);
+        room.setActive(false);
+        roomRepository.save(room);
     }
-
-
 }

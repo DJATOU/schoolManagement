@@ -39,11 +39,21 @@ public class RoomController {
         return ResponseEntity.ok(roomService.updateRoom(id, room));
     }
 
+    /*
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteRoom(@PathVariable Long id) {
         roomService.deleteRoom(id);
         return ResponseEntity.noContent().build();
     }
+    */
 
-    // Additional endpoints as needed...
+    //disable rooms
+    @DeleteMapping("disable/{id_list}")
+    public ResponseEntity<Boolean> disableRooms(@PathVariable String id_list) {
+        System.out.println("Request recieved: " + id_list);
+        for (String id : id_list.split(",")) {
+            roomService.disableRooms(Long.parseLong(id));
+        }
+        return ResponseEntity.ok(true);
+    }
 }

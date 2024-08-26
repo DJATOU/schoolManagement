@@ -8,7 +8,6 @@ import com.school.management.persistance.StudentGroupEntity;
 import com.school.management.repository.GroupRepository;
 import com.school.management.repository.StudentGroupRepository;
 import com.school.management.repository.StudentRepository;
-import com.school.management.service.exception.CustomServiceException;
 import com.school.management.service.exception.GroupAlreadyAssociatedException;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -69,6 +69,13 @@ public class GroupController {
         return ResponseEntity.noContent().build();
     }
 
+    //desactivate a group
+    @DeleteMapping("disable/{id}")
+    public ResponseEntity<Boolean> desactivateGroup(@PathVariable Long id) {
+        groupService.desactivateGroup(id);
+        return ResponseEntity.ok(true);
+    }
+
     @GetMapping("/teacher/{id}")
     public ResponseEntity<List<GroupDTO>> getAllGroupsByTeacherId(@PathVariable Long id) {
         List<GroupDTO> groupDtos = convertToGroupDTOList(groupService.findByTeacherId(id));
@@ -132,5 +139,6 @@ public class GroupController {
         List<GroupDTO> groups = groupService.searchGroupsByNameStartingWithDTO(search);
         return ResponseEntity.ok(groups);
     }
+
 
 }

@@ -112,5 +112,11 @@ public class TeacherController {
         return ResponseEntity.ok(teachers);
     }
 
+    // desactivate a teacher
+    @DeleteMapping("disable/{id}")
+    public ResponseEntity<Boolean> desactivateTeacher(@PathVariable Long id) {
+        teacherService.desactivateTeacher(id);
+        return ResponseEntity.ok(true);
+    }
 }
 
