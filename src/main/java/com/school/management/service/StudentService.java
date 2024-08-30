@@ -174,4 +174,7 @@ public class StudentService {
     public List<StudentEntity> findAllActiveStudents() {
         return studentRepository.findAllByActiveTrue();
     }
+
+    public void desactivateStudent(Long id) {
+    }
 }

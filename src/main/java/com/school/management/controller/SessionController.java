@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -79,10 +80,23 @@ public class SessionController {
 
     @PatchMapping("/{id}")
     public ResponseEntity<SessionDTO> patchSession(@PathVariable Long id, @RequestBody Map<String, Object> updates) {
-        SessionEntity updatedSession = sessionService.updateSession(id, updates);
-        SessionDTO sessionDTO = sessionMapper.sessionEntityToSessionDto(updatedSession);
-        return ResponseEntity.ok(sessionDTO);
+        logger.info("Received PATCH request to update session with ID: {}", id);
+        logger.info("Updates received: {}", updates);
+
+        try {
+            SessionEntity updatedSession = sessionService.updateSession(id, updates);
+            logger.info("Session successfully updated. Updated session details: {}", updatedSession);
+
+            SessionDTO sessionDTO = sessionMapper.sessionEntityToSessionDto(updatedSession);
+            logger.info("Mapped SessionEntity to SessionDTO: {}", sessionDTO);
+
+            return ResponseEntity.ok(sessionDTO);
+        } catch (Exception e) {
+            logger.error("Error occurred while updating session with ID: {}. Error: {}", id, e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
+
 
 
     @GetMapping("/search")

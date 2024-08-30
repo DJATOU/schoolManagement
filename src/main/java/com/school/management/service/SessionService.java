@@ -4,9 +4,13 @@ import com.school.management.dto.session.SessionDTO;
 import com.school.management.dto.session.SessionSearchCriteriaDTO;
 import com.school.management.mapper.SessionMapper;
 import com.school.management.persistance.GroupEntity;
+import com.school.management.persistance.RoomEntity;
 import com.school.management.persistance.SessionEntity;
+import com.school.management.persistance.TeacherEntity;
 import com.school.management.repository.GroupRepository;
+import com.school.management.repository.RoomRepository;
 import com.school.management.repository.SessionRepository;
+import com.school.management.repository.TeacherRepository;
 import com.school.management.service.exception.CustomServiceException;
 import com.school.management.service.util.CommonSpecifications;
 import jakarta.persistence.EntityNotFoundException;
@@ -15,26 +19,38 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Consumer;
 
 @Service
 public class SessionService {
 
     private static final String SESSION_NOT_FOUND_MESSAGE = "Session not found with id: ";
     private static final String GROUPID = "groupId";
+    private static final String ROOMID = "roomId";
+    private static final String TEACHERID = "teacherId";
     private final SessionRepository sessionRepository;
+
+    private final RoomRepository roomRepository;
+
+    private final TeacherRepository teacherRepository;
     private final GroupRepository groupRepository;
     private final PatchService patchService;
     private final SessionMapper sessionMapper;
 
     @Autowired
     public SessionService(SessionRepository sessionRepository, PatchService patchService, GroupRepository groupRepository,
-                          SessionMapper sessionMapper) {
+                          SessionMapper sessionMapper, RoomRepository roomRepository, TeacherRepository teacherRepository) {
         this.sessionRepository = sessionRepository;
         this.patchService = patchService;
         this.groupRepository = groupRepository;
         this.sessionMapper = sessionMapper;
+        this.roomRepository = roomRepository;
+        this.teacherRepository = teacherRepository;
     }
 
     public List<SessionEntity> getAllSessions() {
@@ -55,36 +71,75 @@ public class SessionService {
 
     public SessionEntity updateSession(Long sessionId, Map<String, Object> updates) {
         SessionEntity session = getSessionById(sessionId)
-                .orElseThrow(() -> new EntityNotFoundException(SESSION_NOT_FOUND_MESSAGE + sessionId));
+                .orElseThrow(() -> new EntityNotFoundException("Session not found with ID: " + sessionId));
 
-        if (updates.containsKey(GROUPID)) {
-            Object groupIdObj = updates.get(GROUPID);
+        updateEntityRelations(session, updates);
+        updateSessionTimes(session, updates);
 
-            Long groupId = null;
-            if (groupIdObj != null) {
-                try {
-                    groupId = Long.valueOf(groupIdObj.toString());
-                } catch (NumberFormatException e) {
-                    throw new IllegalArgumentException("Invalid groupId: " + groupIdObj);
-                }
-            }
-
-            updateGroup(session, groupId);
-            updates.remove(GROUPID);
-        }
-
-
+        // Utilisation de ModelMapper pour les autres mises à jour simples
         patchService.applyPatch(session, updates);
+
+        // Sauvegarder l'entité session mise à jour
         return sessionRepository.save(session);
     }
 
-    private void updateGroup(SessionEntity session, Long groupId) {
-        if (groupId != null) {
+    private void updateEntityRelations(SessionEntity session, Map<String, Object> updates) {
+        if (updates.containsKey(GROUPID)) {
+            Long groupId = extractId(updates.get(GROUPID));
             GroupEntity group = groupRepository.findById(groupId)
-                    .orElseThrow(() -> new EntityNotFoundException("Group not found with id: " + groupId));
+                    .orElseThrow(() -> new EntityNotFoundException("Group not found with ID: " + groupId));
             session.setGroup(group);
-        } else {
-            session.setGroup(null);
+            updates.remove(GROUPID);
+        }
+
+        if (updates.containsKey(ROOMID)) {
+            Long roomId = extractId(updates.get(ROOMID));
+            RoomEntity room = roomRepository.findById(roomId)
+                    .orElseThrow(() -> new EntityNotFoundException("Room not found with ID: " + roomId));
+            session.setRoom(room);
+            updates.remove(ROOMID);
+        }
+
+        if (updates.containsKey(TEACHERID)) {
+            Long teacherId = extractId(updates.get(TEACHERID));
+            TeacherEntity teacher = teacherRepository.findById(teacherId)
+                    .orElseThrow(() -> new EntityNotFoundException("Teacher not found with ID: " + teacherId));
+            session.setTeacher(teacher);
+            updates.remove(TEACHERID);
+        }
+    }
+
+    private void updateSessionTimes(SessionEntity session, Map<String, Object> updates) {
+        updateSessionTime("sessionTimeStart", updates, session::setSessionTimeStart);
+        updateSessionTime("sessionTimeEnd", updates, session::setSessionTimeEnd);
+    }
+
+    private void updateSessionTime(String key, Map<String, Object> updates, Consumer<Date> setter) {
+        if (updates.containsKey(key)) {
+            Object timeObject = updates.get(key);
+            if (timeObject instanceof Date date) {
+                setter.accept(date);
+            } else if (timeObject instanceof String dateString) {
+                try {
+                    Date parsedDate = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSX").parse(dateString);
+                    setter.accept(parsedDate);
+                } catch (ParseException e) {
+                    throw new IllegalArgumentException("Invalid date format for " + key, e);
+                }
+            }
+            updates.remove(key);
+        }
+    }
+
+
+    private Long extractId(Object idObj) {
+        if (idObj == null) {
+            return null;
+        }
+        try {
+            return Long.valueOf(idObj.toString());
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid ID value: " + idObj);
         }
     }
 
