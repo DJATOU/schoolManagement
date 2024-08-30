@@ -16,23 +16,21 @@ import org.mapstruct.*;
 @Mapper(componentModel = "spring", builder = @Builder(disableBuilder = false))
 public interface SessionMapper {
 
-    @Mappings({
-            @Mapping(source = "group.id", target = "groupId"),
-            @Mapping(source = "group.name", target = "groupName"),
-            @Mapping(source = "teacher.id", target = "teacherId"),
-            @Mapping(source = "teacher", target = "teacherName", qualifiedByName = "formatTeacherName"),
-            @Mapping(source = "room.id", target = "roomId"),
-            @Mapping(source = "room.name", target = "roomName"),
-            @Mapping(source = "sessionSeries.id", target = "sessionSeriesId"),
-            @Mapping(source = "sessionSeries.name", target = "seriesName"),
-            @Mapping(source = "isFinished", target = "isFinished")
-    })
+    @Mapping(source = "group.id", target = "groupId")
+    @Mapping(source = "group.name", target = "groupName")
+    @Mapping(source = "teacher.id", target = "teacherId")
+    @Mapping(source = "teacher", target = "teacherName", qualifiedByName = "formatTeacherName")
+    @Mapping(source = "room.id", target = "roomId")
+    @Mapping(source = "room.name", target = "roomName")
+    @Mapping(source = "sessionSeries.id", target = "sessionSeriesId")
+    @Mapping(source = "sessionSeries.name", target = "seriesName")
+    @Mapping(source = "isFinished", target = "isFinished")
     SessionDTO sessionEntityToSessionDto(SessionEntity entity);
 
     @Mapping(source = "groupId", target = "group", qualifiedByName = "idToGroup")
     @Mapping(source = "teacherId", target = "teacher", qualifiedByName = "idToTeacher")
     @Mapping(source = "roomId", target = "room", qualifiedByName = "idToRoom")
-    @Mapping(source = "id", target = "sessionSeries", qualifiedByName = "idToSeries")
+    @Mapping(source = "sessionSeriesId", target = "sessionSeries", qualifiedByName = "idToSeries") // Correction ici
     @Mapping(source = "isFinished", target = "isFinished")
     SessionEntity sessionDtoToSessionEntity(SessionDTO dto);
 

@@ -66,9 +66,20 @@ public class SessionController {
 
     @PostMapping
     public ResponseEntity<SessionDTO> createSession(@Valid @RequestBody SessionDTO sessionDTO) {
+        logger.info("Received request to create session: {}", sessionDTO);
+
+        // Convert DTO to entity
         SessionEntity sessionEntity = sessionMapper.sessionDtoToSessionEntity(sessionDTO);
+        logger.debug("Mapped SessionDTO to SessionEntity: {}", sessionEntity);
+
+        // Create session in the database
         SessionEntity createdSession = sessionService.createSession(sessionEntity);
+        logger.debug("Session created in database: {}", createdSession);
+
+        // Convert entity back to DTO
         SessionDTO createdSessionDTO = sessionMapper.sessionEntityToSessionDto(createdSession);
+        logger.info("Returning created session DTO: {}", createdSessionDTO);
+
         return ResponseEntity.ok(createdSessionDTO);
     }
 

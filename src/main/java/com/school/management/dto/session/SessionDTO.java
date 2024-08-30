@@ -59,7 +59,7 @@ public class SessionDTO {
     private String roomName;
 
     @NotNull(message = "Series ID is required")
-    @JsonProperty("sessionSeriesId")
+    @JsonProperty("seriesId")
     private Long sessionSeriesId;
 
     @JsonProperty("seriesName") // Add series name
