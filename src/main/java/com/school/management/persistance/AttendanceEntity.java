@@ -35,4 +35,7 @@ public class AttendanceEntity extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "group_id")
     private GroupEntity group;
+
+    @Column(name = "is_justified")
+    private Boolean isJustified;
 }

@@ -100,5 +100,11 @@ public class AttendanceController {
         return ResponseEntity.noContent().build();
     }
 
+    @PatchMapping("/deactivate/{sessionId}")
+    public ResponseEntity<Void> deactivateAttendanceBySessionId(@PathVariable Long sessionId) {
+        attendanceService.deactivateBySessionId(sessionId);
+        return ResponseEntity.noContent().build();
+    }
+
 
 }

@@ -15,6 +15,8 @@ public class AttendanceDTO {
     private Long studentId; // ID of the student
     private Long sessionId; // ID of the session
     private Boolean isPresent;
+    private Boolean isJustified;
+
     private Long sessionSeriesId; // ID of the session series
     private Long groupId; // ID of the group
 
@@ -25,6 +27,7 @@ public class AttendanceDTO {
     private String updatedBy;
     private Boolean active;
     private String description;
+
 
     // Additional fields if necessary...
 }

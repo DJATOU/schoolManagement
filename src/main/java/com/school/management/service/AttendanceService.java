@@ -60,14 +60,14 @@ public class AttendanceService {
 
     public List<AttendanceEntity> saveAll(List<AttendanceEntity> attendances) {
         for (AttendanceEntity attendance : attendances) {
-            if (attendanceRepository.existsByStudentIdAndSessionId(attendance.getStudent().getId(), attendance.getSession().getId())) {
+            if (attendanceRepository.existsByStudentIdAndSessionIdAndActiveTrue(attendance.getStudent().getId(), attendance.getSession().getId())) {
                 throw new IllegalArgumentException("Attendance already exists for student ID " + attendance.getStudent().getId() + " and session ID " + attendance.getSession().getId());
             }
         }
         return attendanceRepository.saveAll(attendances);
     }
 
-    public List<AttendanceDTO> getAttendanceBySessionId(Long sessionId) {
+    public List<AttendanceDTO> getAttendanceBySessionIdTrueOrFalse(Long sessionId) {
         List<AttendanceEntity> attendances = attendanceRepository.findBySessionId(sessionId);
         return attendances.stream()
                 .map(attendanceMapper::attendanceToAttendanceDTO)
@@ -80,5 +80,21 @@ public class AttendanceService {
     public void deleteBySessionId(Long sessionId) {
         attendanceRepository.deleteBySessionId(sessionId);
     }
+
+    public void deactivateBySessionId(Long sessionId) {
+        List<AttendanceEntity> attendances = attendanceRepository.findBySessionId(sessionId);
+        for (AttendanceEntity attendance : attendances) {
+            attendance.setActive(false);
+        }
+        attendanceRepository.saveAll(attendances);
+    }
+
+    public List<AttendanceDTO> getAttendanceBySessionId(Long sessionId) {
+        List<AttendanceEntity> activeAttendances = attendanceRepository.findBySessionIdAndActiveTrue(sessionId);
+        return activeAttendances.stream()
+                .map(attendanceMapper::attendanceToAttendanceDTO)
+                .toList();
+    }
+
     // Additional methods as needed...
 }

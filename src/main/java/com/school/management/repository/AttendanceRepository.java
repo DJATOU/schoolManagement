@@ -19,9 +19,15 @@ public interface AttendanceRepository extends JpaRepository<AttendanceEntity, Lo
     @Query("SELECT CASE WHEN COUNT(a) > 0 THEN TRUE ELSE FALSE END FROM AttendanceEntity a WHERE a.student.id = :studentId AND a.session.id = :sessionId")
     boolean existsByStudentIdAndSessionId(@Param("studentId") Long studentId, @Param("sessionId") Long sessionId);
 
+    @Query("SELECT CASE WHEN COUNT(a) > 0 THEN TRUE ELSE FALSE END FROM AttendanceEntity a WHERE a.student.id = :studentId AND a.session.id = :sessionId AND a.active = true")
+    boolean existsByStudentIdAndSessionIdAndActiveTrue(@Param("studentId") Long studentId, @Param("sessionId") Long sessionId);
+
+
     @Query("SELECT a FROM AttendanceEntity a WHERE a.session.id = :sessionId")
     List<AttendanceEntity> findBySessionId(@Param("sessionId") Long sessionId);
 
     void deleteBySessionId(Long sessionId);
+
+    List<AttendanceEntity> findBySessionIdAndActiveTrue(Long sessionId);
 }
 
