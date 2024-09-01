@@ -22,11 +22,11 @@ public class PaymentDetailController {
         this.paymentDetailService = paymentDetailService;
     }
 
-    @GetMapping("/process/{studentId}/series/{seriesId}")
+    @GetMapping("/process/{studentId}/series/{sessionSeriesId}")
     public ResponseEntity<List<PaymentDetailDTO>> getPaymentDetailsForSessionsInSeries(
             @PathVariable Long studentId,
-            @PathVariable Long seriesId) {
-        List<PaymentDetailDTO> paymentDetails = paymentDetailService.getPaymentDetailsForSessionsInSeries(studentId, seriesId);
+            @PathVariable Long sessionSeriesId) {
+        List<PaymentDetailDTO> paymentDetails = paymentDetailService.getPaymentDetailsForSessionsInSeries(studentId, sessionSeriesId);
         return ResponseEntity.ok(paymentDetails);
     }
 

@@ -9,12 +9,12 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 public class SeriesPaymentStatus {
-    private Long seriesId;
+    private Long sessionSeriesId;
     private String seriesName;
     private List<SessionPaymentStatus> sessions;
 
     public SeriesPaymentStatus(Long id, List<SessionPaymentStatus> sessionStatuses) {
-        this.seriesId = id;
+        this.sessionSeriesId = id;
         this.sessions = sessionStatuses;
     }
 

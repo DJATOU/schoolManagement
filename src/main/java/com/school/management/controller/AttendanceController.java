@@ -42,6 +42,12 @@ public class AttendanceController {
         return ResponseEntity.ok(attendanceService.getAttendanceById(id));
     }
 
+    @GetMapping("/student/{studentId}/series/{sessionSeriesId}")
+    public ResponseEntity<List<AttendanceDTO>> getAttendancesByStudentAndSeries(@PathVariable Long studentId, @PathVariable Long sessionSeriesId) {
+        List<AttendanceDTO> attendances = attendanceService.getAttendanceByStudentAndSeries(studentId, sessionSeriesId);
+        return ResponseEntity.ok(attendances);
+    }
+
     @PostMapping
     public ResponseEntity<AttendanceDTO> createAttendance(@RequestBody AttendanceDTO attendanceDto) {
         AttendanceEntity attendance = attendanceMapper.attendanceDTOToAttendance(attendanceDto);

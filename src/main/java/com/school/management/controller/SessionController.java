@@ -132,9 +132,9 @@ public class SessionController {
     }
 
 
-    @GetMapping("/series/{seriesId}")
-    public ResponseEntity<List<SessionDTO>> getSessionsBySeriesId(@PathVariable Long seriesId) {
-        List<SessionDTO> sessions = sessionService.getSessionsBySeriesId(seriesId)
+    @GetMapping("/series/{sessionSeriesId}")
+    public ResponseEntity<List<SessionDTO>> getSessionsBySeriesId(@PathVariable Long sessionSeriesId) {
+        List<SessionDTO> sessions = sessionService.getSessionsBySeriesId(sessionSeriesId)
                 .stream()
                 .map(sessionMapper::sessionEntityToSessionDto)
                 .toList();

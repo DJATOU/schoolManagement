@@ -177,8 +177,8 @@ public class SessionService {
         return sessionRepository.save(session);
     }
 
-    public List<SessionEntity> getSessionsBySeriesId(Long seriesId) {
-        return sessionRepository.findBySessionSeriesId(seriesId);
+    public List<SessionEntity> getSessionsBySeriesId(Long sessionSeriesId) {
+        return sessionRepository.findBySessionSeriesId(sessionSeriesId);
     }
 
     public List<SessionDTO> findSessionsInRange(LocalDateTime start, LocalDateTime end) {

@@ -18,8 +18,8 @@ public class PaymentDetailService {
         this.paymentDetailRepository = paymentDetailRepository;
     }
 
-    public List<PaymentDetailDTO> getPaymentDetailsForSessionsInSeries(Long studentId, Long seriesId) {
-        List<PaymentDetailEntity> paymentDetails = paymentDetailRepository.findByPayment_StudentIdAndSession_SessionSeriesId(studentId, seriesId);
+    public List<PaymentDetailDTO> getPaymentDetailsForSessionsInSeries(Long studentId, Long sessionSeriesId) {
+        List<PaymentDetailEntity> paymentDetails = paymentDetailRepository.findByPayment_StudentIdAndSession_SessionSeriesId(studentId, sessionSeriesId);
         return paymentDetails.stream()
                 .map(this::convertToDto)
                 .toList();

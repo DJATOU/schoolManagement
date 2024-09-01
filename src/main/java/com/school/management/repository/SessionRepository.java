@@ -21,11 +21,11 @@ public interface SessionRepository extends JpaRepository<SessionEntity, Long>, J
     @Query("SELECT s from SessionEntity s JOIN FETCH s.group g JOIN FETCH s.room r JOIN FETCH s.teacher t")
     List<SessionEntity> findAllWithDetails();
 
-    List<SessionEntity> findBySessionSeriesId(Long seriesId);
+    List<SessionEntity> findBySessionSeriesId(Long sessionSeriesId);
 
     List<SessionEntity> findBySessionTimeStartBetween(LocalDateTime start, LocalDateTime end);
 
     List<SessionEntity> findByGroupIdAndSessionTimeStartBetween(Long groupId, LocalDateTime start, LocalDateTime end);
 
-    int countBySessionSeriesId(Long seriesId);
+    int countBySessionSeriesId(Long sessionSeriesId);
 }

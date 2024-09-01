@@ -96,5 +96,17 @@ public class AttendanceService {
                 .toList();
     }
 
+    public List<AttendanceDTO> getAttendanceByStudentAndSeries(Long studentId, Long sessionSeriesId) {
+        List<AttendanceEntity> attendanceEntities = attendanceRepository.findByStudentIdAndSessionSeriesIdAndActiveTrue(studentId, sessionSeriesId);
+        if (attendanceEntities.isEmpty()) {
+            System.out.println("No attendance records found for student ID " + studentId + " and series ID " + sessionSeriesId);
+        } else {
+            System.out.println("Attendance records found: " + attendanceEntities.size());
+        }
+        return attendanceEntities.stream()
+                .map(attendanceMapper::attendanceToAttendanceDTO)
+                .toList();
+    }
+
     // Additional methods as needed...
 }

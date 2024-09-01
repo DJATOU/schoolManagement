@@ -7,12 +7,13 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 
 @Repository
 public interface AttendanceRepository extends JpaRepository<AttendanceEntity, Long> {
 
-    long countByStudentIdAndSessionSeriesIdAndIsPresent(Long studentId, Long seriesId, boolean isPresent);
+    long countByStudentIdAndSessionSeriesIdAndIsPresent(Long studentId, Long sessionSeriesId, boolean isPresent);
 
     List<SessionEntity> findByStudentIdAndIsPresent(Long studentId, boolean b);
 
@@ -29,5 +30,7 @@ public interface AttendanceRepository extends JpaRepository<AttendanceEntity, Lo
     void deleteBySessionId(Long sessionId);
 
     List<AttendanceEntity> findBySessionIdAndActiveTrue(Long sessionId);
+
+    List<AttendanceEntity> findByStudentIdAndSessionSeriesIdAndActiveTrue(Long studentId, Long sessionSeriesId);
 }
 

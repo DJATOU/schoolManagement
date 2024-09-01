@@ -213,19 +213,19 @@ public class PaymentController {
         return ResponseEntity.ok(paymentStatus);
     }
 
-    @GetMapping("/process/{studentId}/series/{seriesId}/payment-details")
+    @GetMapping("/process/{studentId}/series/{sessionSeriesId}/payment-details")
     public ResponseEntity<List<PaymentDetailDTO>> getPaymentDetailsForSeries(
             @PathVariable Long studentId,
-            @PathVariable Long seriesId) {
-        List<PaymentDetailDTO> paymentDetails = paymentService.getPaymentDetailsForSeries(studentId, seriesId);
+            @PathVariable Long sessionSeriesId) {
+        List<PaymentDetailDTO> paymentDetails = paymentService.getPaymentDetailsForSeries(studentId, sessionSeriesId);
         return ResponseEntity.ok(paymentDetails);
     }
 
-    @GetMapping("/process/{studentId}/series/{seriesId}/payment-history")
+    @GetMapping("/process/{studentId}/series/{sessionSeriesId}/payment-history")
     public ResponseEntity<List<PaymentDTO>> getPaymentHistoryForSeries(
             @PathVariable Long studentId,
-            @PathVariable Long seriesId) {
-        List<PaymentDTO> paymentHistory = paymentService.getPaymentHistoryForSeries(studentId, seriesId);
+            @PathVariable Long sessionSeriesId) {
+        List<PaymentDTO> paymentHistory = paymentService.getPaymentHistoryForSeries(studentId, sessionSeriesId);
         return ResponseEntity.ok(paymentHistory);
     }
 
