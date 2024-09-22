@@ -1,6 +1,8 @@
 package com.school.management.controller;
 
 import com.school.management.dto.GroupDTO;
+import com.school.management.dto.SessionSeriesDto;
+import com.school.management.dto.StudentDTO;
 import com.school.management.mapper.GroupMapper;
 import com.school.management.persistance.GroupEntity;
 import com.school.management.service.GroupServiceImpl;
@@ -46,6 +48,13 @@ public class GroupController {
                 .orElseThrow(() -> new RuntimeException("Group not found")); // Customize exception
         return ResponseEntity.ok(groupMapper.groupToGroupDTO(group));
     }
+
+    @GetMapping("/details/{idGroup}")
+    public ResponseEntity<GroupDTO> getGroupDetailsById(@PathVariable Long idGroup) {
+        GroupEntity group = groupService.getGroupWithDetails(idGroup);
+        return ResponseEntity.ok(groupMapper.groupToGroupDTO(group));
+    }
+
 
     @GetMapping
     public ResponseEntity<List<GroupDTO>> getAllGroups() {
@@ -135,10 +144,29 @@ public class GroupController {
     @GetMapping("/searchByNames")
     @Transactional(readOnly = true)
     public ResponseEntity<List<GroupDTO>> getGroupsByName(@RequestParam(required = false) String search) {
-        System.out.println("Received search parameter: " + search);
         List<GroupDTO> groups = groupService.searchGroupsByNameStartingWithDTO(search);
         return ResponseEntity.ok(groups);
     }
+
+    @GetMapping("/{groupId}/series")
+    public ResponseEntity<List<SessionSeriesDto>> getSeriesByGroupId(@PathVariable Long groupId) {
+        List<SessionSeriesDto> sessionSeries = groupService.getSeriesByGroupId(groupId);
+        return ResponseEntity.ok(sessionSeries);
+    }
+
+    @GetMapping("/{groupId}/students")
+    public ResponseEntity<List<StudentDTO>> getStudentsByGroupId(@PathVariable Long groupId) {
+        List<StudentDTO> students = groupService.getStudentsByGroupId(groupId);
+        return ResponseEntity.ok(students);
+    }
+
+    @GetMapping("/{groupId}/student-count")
+    public ResponseEntity<Long> countStudentsInGroup(@PathVariable Long groupId) {
+        Long studentCount = groupService.countStudentsInGroup(groupId);
+        return ResponseEntity.ok(studentCount);
+    }
+
+
 
 
 }

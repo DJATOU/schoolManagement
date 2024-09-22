@@ -1,5 +1,6 @@
 package com.school.management.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -12,9 +13,10 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
+@ToString
 public class StudentDTO {
 
-    Long id;
+    private Long id;
 
     @NotBlank(message = "First name is required")
     private String firstName;
@@ -35,6 +37,7 @@ public class StudentDTO {
 
     private String placeOfBirth;
 
+    @JsonProperty("photo")
     private String photo;
 
     @NotNull(message = "Level is required")

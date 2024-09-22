@@ -1,18 +1,15 @@
 package com.school.management.service;
 
 import com.school.management.dto.GroupDTO;
+import com.school.management.dto.SessionSeriesDto;
+import com.school.management.dto.StudentDTO;
 import com.school.management.mapper.GroupMapper;
+import com.school.management.mapper.StudentMapper;
 import com.school.management.persistance.GroupEntity;
 import com.school.management.repository.GroupRepository;
 import com.school.management.service.exception.CustomServiceException;
 import com.school.management.service.interfaces.GroupService;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.TypedQuery;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Predicate;
-import jakarta.persistence.criteria.Root;
+import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,16 +22,25 @@ import java.util.Optional;
 
 @Service
 public class GroupServiceImpl implements GroupService {
-    @PersistenceContext
-    private EntityManager entityManager;
-    private static final Logger LOGGER = LoggerFactory.getLogger(GroupService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(GroupServiceImpl.class);
+    private static final String GROUP_NOT_FOUND = "Group not found with id: ";
     private final GroupRepository groupRepository;
+    private final GroupMapper groupMapper;
+    private final StudentMapper studentMapper;
+    private final ModelMapper modelMapper;
+    private final GroupSearchService groupSearchService;
 
-    private GroupMapper groupMapper;
     @Autowired
-    public GroupServiceImpl(GroupRepository groupRepository, GroupMapper groupMapper) {
+    public GroupServiceImpl(GroupRepository groupRepository,
+                            GroupMapper groupMapper,
+                            StudentMapper studentMapper,
+                            ModelMapper modelMapper,
+                            GroupSearchService groupSearchService) {
         this.groupRepository = groupRepository;
         this.groupMapper = groupMapper;
+        this.studentMapper = studentMapper;
+        this.modelMapper = modelMapper;
+        this.groupSearchService = groupSearchService;
     }
 
     public List<GroupEntity> findByTeacherId(Long teacherId) {
@@ -67,7 +73,6 @@ public class GroupServiceImpl implements GroupService {
 
     @Transactional
     public GroupEntity save(GroupEntity group) {
-        // Additional validation or business logic here if needed
         return groupRepository.save(group);
     }
 
@@ -79,26 +84,10 @@ public class GroupServiceImpl implements GroupService {
     @Override
     @Transactional(readOnly = true)
     public List<GroupDTO> searchGroupsByNameStartingWithDTO(String name) {
-        List<GroupEntity> groupEntities = searchGroupsByNameStartingWith(name);
+        List<GroupEntity> groupEntities = groupSearchService.searchGroupsByNameStartingWith(name);
         return groupEntities.stream()
-                .map(entity -> groupMapper.groupToGroupDTO(entity))
+                .map(groupMapper::groupToGroupDTO)
                 .toList();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<GroupEntity> searchGroupsByNameStartingWith(String input) {
-        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<GroupEntity> cq = cb.createQuery(GroupEntity.class);
-        Root<GroupEntity> group = cq.from(GroupEntity.class);
-
-        String pattern = input.trim().toLowerCase() + "%";
-        Predicate namePredicate = cb.like(cb.lower(group.get("name")), pattern);
-
-        cq.where(namePredicate);
-
-        TypedQuery<GroupEntity> query = entityManager.createQuery(cq);
-        return query.getResultList();
     }
 
     @Override
@@ -107,5 +96,35 @@ public class GroupServiceImpl implements GroupService {
             group.setActive(false);
             groupRepository.save(group);
         });
+    }
+
+    @Transactional(readOnly = true)
+    public List<SessionSeriesDto> getSeriesByGroupId(Long groupId) {
+        GroupEntity group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new CustomServiceException(GROUP_NOT_FOUND + groupId));
+
+        return group.getSeries().stream().map(element -> modelMapper.map(element, SessionSeriesDto.class))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<StudentDTO> getStudentsByGroupId(Long groupId) {
+        GroupEntity group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new CustomServiceException(GROUP_NOT_FOUND + groupId));
+        return group.getStudents().stream()
+                .map(studentMapper::studentToStudentDTO)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public Long countStudentsInGroup(Long groupId) {
+        GroupEntity group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new CustomServiceException(GROUP_NOT_FOUND + groupId));
+        return (long) group.getStudents().size();
+    }
+
+    public GroupEntity getGroupWithDetails(Long groupId) {
+        return groupRepository.findGroupWithDetailsById(groupId)
+                .orElseThrow(() -> new RuntimeException(GROUP_NOT_FOUND + groupId));
     }
 }

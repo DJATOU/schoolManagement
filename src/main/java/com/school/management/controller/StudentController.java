@@ -11,7 +11,10 @@ import com.school.management.service.exception.CustomServiceException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -19,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -37,7 +41,6 @@ public class StudentController {
     @Value("${app.upload.dir}")
     private String uploadDir;
     private final StudentMapper studentMapper;
-
     private final GroupMapper groupMapper;
 
     @Autowired
@@ -47,24 +50,31 @@ public class StudentController {
         this.groupMapper = groupMapper;
     }
 
+
     @PostMapping("/createStudent")
-    public ResponseEntity<?> createStudent(@Valid @ModelAttribute StudentDTO studentDto,
+    public ResponseEntity<Object> createStudent(@Valid @ModelAttribute StudentDTO studentDto,
                                            @RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {
             return ResponseEntity.badRequest().body("File is required and must not be empty.");
         }
-        String fileName = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
+
+        // Générer un nom unique pour l'image
+        String fileName = System.currentTimeMillis() + "_" + StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
 
         try {
+            // Sauvegarder l'image sur le disque
             Path uploadPath = Paths.get(uploadDir);
             if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);
             }
             Path filePath = uploadPath.resolve(fileName);
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-            studentDto.setPhoto(filePath.toString());
+
+            // Stocker uniquement le nom de l'image dans la base de données
+            studentDto.setPhoto(fileName);  // Stocke juste le nom de l'image, ex: "nom_image.png"
+
         } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Could not save file: " + fileName);
+            return ResponseEntity.status(500).body("Could not save file: " + fileName);
         }
 
         try {
@@ -72,12 +82,9 @@ public class StudentController {
             StudentEntity savedStudent = studentService.save(student);
             return ResponseEntity.ok(studentMapper.studentToStudentDTO(savedStudent));
         } catch (Exception e) {
-            // Gestion des autres exceptions potentielles lors de la sauvegarde de l'étudiant
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Could not save student");
+            return ResponseEntity.status(500).body("Could not save student");
         }
     }
-
-
 
     @PutMapping("/{id}")
     public ResponseEntity<StudentDTO> updateStudent(@PathVariable Long id, @Valid @RequestBody StudentDTO studentDto) {
@@ -113,14 +120,15 @@ public class StudentController {
         return ResponseEntity.ok(studentDTOs);
     }
 
-
     @GetMapping("id/{id}")
     public ResponseEntity<StudentDTO> getStudentById(@PathVariable Long id) {
         StudentEntity student = studentService.findById(id)
                 .orElseThrow(() -> new CustomServiceException(STUDENT_NOT_FOUND_MESSAGE + id));
         StudentDTO studentDto = studentMapper.studentToStudentDTO(student);
+
         return ResponseEntity.ok(studentDto);
     }
+
 
     @GetMapping("/groups/{groupId}")
     public ResponseEntity<List<StudentDTO>> getStudentsByGroupId(@PathVariable Long groupId) {
@@ -197,4 +205,27 @@ public class StudentController {
         studentService.desactivateStudent(id);
         return ResponseEntity.ok(true);
     }
+
+    @GetMapping("/photos/{fileName}")
+    public ResponseEntity<Resource> getPhoto(@PathVariable String fileName) {
+        try {
+            Path filePath = Paths.get(uploadDir).resolve(fileName).normalize();
+            Resource resource = new UrlResource(filePath.toUri());
+
+            if (resource.exists()) {
+                return ResponseEntity.ok()
+                        .contentType(MediaType.IMAGE_JPEG)
+                        .body(resource);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (MalformedURLException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+
+
+
+
 }

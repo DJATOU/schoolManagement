@@ -8,7 +8,6 @@ import com.school.management.repository.StudentRepository;
 import com.school.management.service.exception.CustomServiceException;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.TypedQuery;
 import jakarta.persistence.criteria.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,33 +16,30 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
 public class StudentService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StudentService.class);
-
     private static final String LASTNAME = "lastName";
-
     private static final String FIRSTNAME = "firstName";
     @PersistenceContext
     private EntityManager entityManager;
     private final StudentRepository studentRepository;
-    private static final String basePhotoUrl = "http://localhost:8080/personne/";
-    private StudentMapper studentMapper;
+    private final StudentMapper studentMapper;
+    private final StudentSearchService studentSearchService;
 
     @Autowired
-    public StudentService(StudentRepository studentRepository, StudentMapper studentMapper){
+    public StudentService(StudentRepository studentRepository, StudentMapper studentMapper, StudentSearchService studentSearchService){
         this.studentMapper = studentMapper;
         this.studentRepository = studentRepository;
+        this.studentSearchService = studentSearchService;
     }
 
     @Transactional(readOnly = true)
@@ -90,57 +86,23 @@ public class StudentService {
     }
 
     @Transactional(readOnly = true)
-    public List<StudentEntity> searchStudentsByNameStartingWith(String input) {
-        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<StudentEntity> cq = cb.createQuery(StudentEntity.class);
-        Root<StudentEntity> student = cq.from(StudentEntity.class);
-
-        // Normalize and split input by spaces
-        String[] nameParts = input.trim().toLowerCase().split("\\s+");
-        Predicate finalPredicate;
-
-        if (nameParts.length == 1) {
-            String pattern = nameParts[0] + "%";
-            // Search either first or last name if only one name part is provided
-            Predicate firstNamePredicate = cb.like(cb.lower(student.get(FIRSTNAME)), pattern);
-            Predicate lastNamePredicate = cb.like(cb.lower(student.get(LASTNAME)), pattern);
-            finalPredicate = cb.or(firstNamePredicate, lastNamePredicate);
-        } else {
-            // Assume the first part is the first name and the second part is the last name for simplicity
-            String firstNamePattern = nameParts[0] + "%";
-            String lastNamePattern = nameParts[1] + "%";
-            Predicate firstNamePredicate = cb.like(cb.lower(student.get(FIRSTNAME)), firstNamePattern);
-            Predicate lastNamePredicate = cb.like(cb.lower(student.get(LASTNAME)), lastNamePattern);
-
-            // Apply both conditions
-            finalPredicate = cb.and(firstNamePredicate, lastNamePredicate);
-        }
-
-        cq.where(finalPredicate);
-
-        // Execute the query
-        TypedQuery<StudentEntity> query = entityManager.createQuery(cq);
-        return query.getResultList();
-    }
-
-
-    @Transactional(readOnly = true)
     public List<StudentDTO> searchStudentsByNameStartingWithDTO(String name) {
-        List<StudentEntity> studentEntities = searchStudentsByNameStartingWith(name);
+        List<StudentEntity> studentEntities = studentSearchService.searchStudentsByNameStartingWith(name);
         return studentEntities.stream()
                 .map(entity -> {
                     StudentDTO dto = studentMapper.studentToStudentDTO(entity);
                     if (entity.getPhoto() != null && !entity.getPhoto().isEmpty()) {
-                        Path photoPath = Paths.get(entity.getPhoto());
-                        String photoName = photoPath.getFileName().toString();
-                        String photoUrl = basePhotoUrl + photoName;
+                        String fileName = Paths.get(entity.getPhoto()).getFileName().toString();
+                        String photoUrl = "http://localhost:8080/api/students/photos/" + fileName;
                         dto.setPhoto(photoUrl);
+                    } else {
+                        // Optionnel : définir une image par défaut
+                        dto.setPhoto("assets/default-avatar.png");
                     }
                     return dto;
                 })
                 .toList();
     }
-
 
     private <T> Predicate buildPredicate(T value, Function<T, Predicate> predicateFunction) {
         return (value != null) ? predicateFunction.apply(value) : null;
@@ -175,6 +137,11 @@ public class StudentService {
         return studentRepository.findAllByActiveTrue();
     }
 
+    @Transactional
     public void desactivateStudent(Long id) {
+        StudentEntity student = studentRepository.findById(id)
+                .orElseThrow(() -> new CustomServiceException("Student not found with id " + id));
+        student.setActive(false);
+        studentRepository.save(student);
     }
 }

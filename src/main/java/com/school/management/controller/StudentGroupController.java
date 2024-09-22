@@ -20,8 +20,12 @@ import java.util.Map;
 @RequestMapping("/api/student-groups")
 public class StudentGroupController {
 
-    private final StudentGroupService studentGroupService;
     private static final Logger logger = LoggerFactory.getLogger(StudentGroupController.class);
+    private static final String ERROR_MESSAGE = "error";
+    private static final String MESSAGE = "message";
+
+    private final StudentGroupService studentGroupService;
+
     @Autowired
     public StudentGroupController(StudentGroupService studentGroupService) {
         this.studentGroupService = studentGroupService;
@@ -32,43 +36,47 @@ public class StudentGroupController {
                                                                   @RequestBody StudentGroupDTO studentGroupDto) {
         logger.info("Received request to add groups to student: {}", studentId);
         logger.info("StudentGroupDTO: {}", studentGroupDto);
-        try {
-            studentGroupDto.setStudentId(studentId);
-            studentGroupService.manageStudentGroupAssociations(studentGroupDto);
-            Map<String, Object> response = new HashMap<>();
-            response.put("message", "Groups added to student successfully");
-            return ResponseEntity.ok(response);
-        } catch (GroupAlreadyAssociatedException e) {
-            logger.error("GroupAlreadyAssociatedException: {}", e.getMessage());
-            Map<String, Object> response = new HashMap<>();
-            response.put("message", "Some groups were already associated with the student");
-            response.put("alreadyAssociatedGroups", e.getGroupNames());
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
-        } catch (EntityNotFoundException e) {
-            logger.error("EntityNotFoundException: {}", e.getMessage());
-            Map<String, Object> response = new HashMap<>();
-            response.put("error", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-        } catch (Exception e) {
-            logger.error("Exception: {}", e.getMessage());
-            Map<String, Object> response = new HashMap<>();
-            response.put("error", "Error adding groups to student: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
+        studentGroupDto.setStudentId(studentId);
+        return handleGroupAssociation(() -> studentGroupService.manageStudentGroupAssociations(studentGroupDto));
     }
 
-
     @PostMapping("/{groupId}/addStudents")
-    public ResponseEntity<String> addStudentsToGroup(@PathVariable Long groupId,
-                                                     @RequestBody StudentGroupDTO studentGroupDto) {
+    public ResponseEntity<Map<String, Object>> addStudentsToGroup(@PathVariable Long groupId,
+                                                                  @RequestBody StudentGroupDTO studentGroupDto) {
+        logger.info("Received request to add students to group: {}", groupId);
+        logger.info("StudentGroupDTO: {}", studentGroupDto);
         studentGroupDto.setGroupId(groupId);
-        studentGroupService.manageStudentGroupAssociations(studentGroupDto);
-        return ResponseEntity.ok("Students added to group successfully");
+        return handleGroupAssociation(() -> studentGroupService.manageStudentGroupAssociations(studentGroupDto));
     }
 
     @GetMapping("/{groupId}/students")
     public ResponseEntity<List<StudentDTO>> getStudentsOfGroup(@PathVariable Long groupId) {
         List<StudentDTO> students = studentGroupService.getStudentsByGroupId(groupId);
         return ResponseEntity.ok(students);
+    }
+
+    private ResponseEntity<Map<String, Object>> handleGroupAssociation(Runnable associationTask) {
+        try {
+            associationTask.run();
+            Map<String, Object> response = new HashMap<>();
+            response.put(MESSAGE, "Operation completed successfully");
+            return ResponseEntity.ok(response);
+        } catch (GroupAlreadyAssociatedException e) {
+            logger.error("GroupAlreadyAssociatedException: {}", e.getMessage());
+            Map<String, Object> response = new HashMap<>();
+            response.put(MESSAGE, "Some entities were already associated");
+            response.put("alreadyAssociatedEntities", e.getGroupNames());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+        } catch (EntityNotFoundException e) {
+            logger.error("EntityNotFoundException: {}", e.getMessage());
+            Map<String, Object> response = new HashMap<>();
+            response.put(ERROR_MESSAGE, e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        } catch (Exception e) {
+            logger.error("Exception: {}", e.getMessage());
+            Map<String, Object> response = new HashMap<>();
+            response.put(ERROR_MESSAGE, "Error during operation: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
     }
 }

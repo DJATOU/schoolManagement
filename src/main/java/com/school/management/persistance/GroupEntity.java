@@ -1,9 +1,7 @@
 package com.school.management.persistance;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -27,34 +25,36 @@ public class GroupEntity extends BaseEntity {
     @Column(name = "name")
     private String name;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)  // Lazy loading for groupType
     @JoinColumn(name = "group_type_id")
     private GroupTypeEntity groupType;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)  // Lazy loading for level
     @JoinColumn(name = "level_id")
     private LevelEntity level;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)  // Lazy loading for subject
     @JoinColumn(name = "subject_id")
     private SubjectEntity subject;
 
     @Column(name = "session_per_serie")
     private int sessionNumberPerSerie;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)  // Lazy loading for price
     @JoinColumn(name = "price_id")
-    private PricingEntity price; // Link to the PriceEntity
+    private PricingEntity price;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)  // Lazy loading for teacher
     @JoinColumn(name = "teacher_id")
     @JsonBackReference
     private TeacherEntity teacher;
 
     @Builder.Default
-    @ManyToMany(mappedBy = "groups")
+    @ManyToMany(mappedBy = "groups", fetch = FetchType.LAZY)  // Lazy loading for students
     @JsonIgnore
     private Set<StudentEntity> students = new HashSet<>();
 
-
+    @Builder.Default
+    @OneToMany(mappedBy = "group", fetch = FetchType.LAZY)  // Lazy loading for series
+    private Set<SessionSeriesEntity> series = new HashSet<>();
 }

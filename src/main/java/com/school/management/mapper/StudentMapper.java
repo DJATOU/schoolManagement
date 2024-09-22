@@ -1,21 +1,23 @@
 package com.school.management.mapper;
 
-import com.school.management.config.ImageUrlService;
 import com.school.management.dto.StudentDTO;
+import com.school.management.persistance.GroupEntity;
 import com.school.management.persistance.LevelEntity;
 import com.school.management.persistance.StudentEntity;
-import java.util.Collections;
-import com.school.management.persistance.GroupEntity;
 import com.school.management.persistance.TutorEntity;
 import com.school.management.repository.LevelRepository;
 import com.school.management.repository.TutorRepository;
 import com.school.management.service.exception.CustomServiceException;
-import org.mapstruct.*;
+import org.mapstruct.Builder;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.Named;
 
+import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Mapper(componentModel = "spring", builder = @Builder(disableBuilder = false), imports = {LevelRepository.class})
+@Mapper(componentModel = "spring", builder = @Builder(), imports = {LevelRepository.class})
 public interface StudentMapper {
 
     @Mapping(source = "tutor.id", target = "tutorId")
@@ -46,13 +48,6 @@ public interface StudentMapper {
         return ApplicationContextProvider.getBean(TutorRepository.class)
                 .findById(id)
                 .orElseThrow(() -> new CustomServiceException("Tutor not found with id: " + id));
-    }
-
-    @AfterMapping
-    default void setPhotoUrl(StudentEntity student, @MappingTarget StudentDTO dto) {
-        ImageUrlService imageUrlService = ApplicationContextProvider.getBean(ImageUrlService.class);
-        String photoUrl = imageUrlService.getPhotoUrl(student.getPhoto());
-        dto.setPhoto(photoUrl);
     }
 
     @Named("loadLevelEntity")

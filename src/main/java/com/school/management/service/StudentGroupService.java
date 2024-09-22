@@ -38,7 +38,6 @@ public class StudentGroupService {
 
     @Transactional
     public void manageStudentGroupAssociations(StudentGroupDTO studentGroupDto) {
-        System.out.println("Managing student group associations: " + studentGroupDto); // Ajouter un journal ici
         if (studentGroupDto.isAddingStudentToGroups()) {
             addGroupsToStudent(studentGroupDto);
         } else if (studentGroupDto.isAddingStudentsToGroup()) {
@@ -51,10 +50,8 @@ public class StudentGroupService {
     public void addGroupsToStudent(StudentGroupDTO studentGroupDto) {
         StudentEntity student = studentRepository.findById(studentGroupDto.getStudentId())
                 .orElseThrow(() -> new EntityNotFoundException("Student not found with id: " + studentGroupDto.getStudentId()));
-        System.out.println("Found student: " + student); // Ajouter un journal ici
 
         List<GroupEntity> groups = groupRepository.findAllById(studentGroupDto.getGroupIds());
-        System.out.println("Found groups: " + groups); // Ajouter un journal ici
 
         if (groups.size() != studentGroupDto.getGroupIds().size()) {
             throw new EntityNotFoundException("One or more groups not found");
@@ -72,10 +69,8 @@ public class StudentGroupService {
                         .description(studentGroupDto.getDescription())
                         .build();
                 studentGroupRepository.save(studentGroup);
-                System.out.println("Added group to student: " + group.getId()); // Ajouter un journal ici
             } else {
                 alreadyAssociatedGroups.add(group);
-                System.out.println("Student is already associated with group: " + group.getId());
             }
         });
 
@@ -86,10 +81,6 @@ public class StudentGroupService {
             throw new GroupAlreadyAssociatedException("Groups already associated with student", alreadyAssociatedGroupNames);
         }
     }
-
-
-
-
 
     public void addStudentsToGroup(StudentGroupDTO studentGroupDto) {
         GroupEntity group = groupRepository.findById(studentGroupDto.getGroupId())

@@ -9,7 +9,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 
-@Mapper(componentModel = "spring",  builder = @Builder(disableBuilder = false))
+@Mapper(componentModel = "spring",  builder = @Builder())
 public interface GroupMapper {
 
     @Mapping(source = "groupType.id", target = "groupTypeId")
@@ -17,6 +17,11 @@ public interface GroupMapper {
     @Mapping(source = "subject.id", target = "subjectId")
     @Mapping(source = "price.id", target = "priceId")
     @Mapping(source = "teacher.id", target = "teacherId")
+    @Mapping(source = "teacher.firstName", target = "teacherName")
+    @Mapping(source = "groupType.name", target = "groupTypeName")  // Map group type name
+    @Mapping(source = "level.name", target = "levelName")          // Map level name
+    @Mapping(source = "subject.name", target = "subjectName")      // Map subject name
+    @Mapping(source = "price.price", target = "priceAmount")      // Map price amount
     GroupDTO groupToGroupDTO(GroupEntity group);
 
     @Mapping(source = "groupTypeId", target = "groupType", qualifiedByName = "idToGroupType")
