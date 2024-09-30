@@ -1,4 +1,4 @@
-package com.school.management.service;
+package com.school.management.service.student;
 
 import com.school.management.dto.StudentDTO;
 import com.school.management.mapper.StudentMapper;

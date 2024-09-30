@@ -79,23 +79,38 @@ public class PaymentService {
         GroupEntity group = getGroup(groupId);
         SessionSeriesEntity series = getSessionSeries(sessionSeriesId);
 
-        // Vérifier si le paiement est valide
+        // Récupérer le coût total de la série
+        double totalSeriesCost = calculateTotalCost(group);
+
+        // Récupérer le paiement existant s'il y en a un
         Optional<PaymentEntity> existingPaymentOpt = paymentRepository.findByStudentIdAndGroupIdAndSessionSeriesId(studentId, groupId, sessionSeriesId);
         double currentTotalPaid = existingPaymentOpt.map(PaymentEntity::getAmountPaid).orElse(0.0);
+        double newTotalAmount = currentTotalPaid + amountPaid;
 
-        if (!canProcessPayment(sessionSeriesId, currentTotalPaid + amountPaid, group)) {
+        // Vérifier si le nouveau total payé dépasse le coût total de la série
+        if (newTotalAmount > totalSeriesCost) {
+            double surplus = newTotalAmount - totalSeriesCost;
+            throw new CustomServiceException(
+                    "Le montant payé dépasse le coût total de la série de " + surplus + " euros.",
+                    HttpStatus.BAD_REQUEST
+            );
+        }
+
+        // Vérifier si le paiement dépasse le coût des sessions créées
+        if (!canProcessPayment(sessionSeriesId, newTotalAmount, group)) {
             throw new CustomServiceException(
                     "Le paiement ne peut pas être effectué car il dépasse le coût des sessions actuellement créées.",
                     HttpStatus.BAD_REQUEST
             );
         }
 
-        // Continue avec le processus de paiement si valide
+        // Continuer avec le processus de paiement si valide
         PaymentEntity payment = getOrCreatePayment(student, group, series, amountPaid, sessionSeriesId);
 
         // Mettre à jour le statut du paiement après distribution
         return paymentRepository.save(payment);
     }
+
 
     private boolean canProcessPayment(Long sessionSeriesId, double totalProposedAmount, GroupEntity group) {
         double totalCreatedSessionsCost = calculateCreatedSessionsCost(sessionSeriesId, group);
@@ -103,6 +118,7 @@ public class PaymentService {
         // Vérifier si le montant total proposé est supérieur au coût total des sessions créées
         return totalProposedAmount <= totalCreatedSessionsCost;
     }
+
 
     private double calculateCreatedSessionsCost(Long sessionSeriesId, GroupEntity group) {
         // Comptez directement les sessions associées à la série
@@ -239,6 +255,7 @@ public class PaymentService {
                     student.getTutor().getId(),
                     student.getEstablishment(),
                     student.getAverageScore(),
+                    student.getActive(),
                     isOverdue
             );
 

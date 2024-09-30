@@ -8,10 +8,7 @@ import com.school.management.persistance.TutorEntity;
 import com.school.management.repository.LevelRepository;
 import com.school.management.repository.TutorRepository;
 import com.school.management.service.exception.CustomServiceException;
-import org.mapstruct.Builder;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.Named;
+import org.mapstruct.*;
 
 import java.util.Collections;
 import java.util.Set;
@@ -31,6 +28,14 @@ public interface StudentMapper {
     @Mapping(target = "attendances", ignore = true) // Ignore attendances in DTO to Entity conversion
     @Mapping(source = "levelId", target = "level", qualifiedByName="loadLevelEntity") // Utiliser une méthode pour charger le LevelEntity
     StudentEntity studentDTOToStudent(StudentDTO studentDto);
+
+    @Mapping(target = "id", ignore = true) // Ignorer l'id pour éviter les problèmes
+    @Mapping(target = "active", ignore = true) // Ignorer 'active' pour ne pas l'écraser
+    @Mapping(source = "tutorId", target = "tutor", qualifiedByName = "idToTutor")
+    @Mapping(target = "groups", ignore = true)
+    @Mapping(target = "attendances", ignore = true)
+    @Mapping(source = "levelId", target = "level", qualifiedByName="loadLevelEntity")
+    void updateStudentFromDTO(StudentDTO dto, @MappingTarget StudentEntity entity);
 
     @Named("groupSetToIdSet")
     default Set<Long> groupSetToIdSet(Set<GroupEntity> groups) {

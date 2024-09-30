@@ -1,7 +1,8 @@
-package com.school.management.service;
+package com.school.management.service.student;
 
 import com.school.management.persistance.GroupEntity;
 import com.school.management.persistance.StudentEntity;
+import com.school.management.service.PdfGeneratorService;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;

@@ -1,4 +1,4 @@
-package com.school.management.service;
+package com.school.management.service.group;
 
 import com.school.management.dto.GroupDTO;
 import com.school.management.dto.SessionSeriesDto;
@@ -6,9 +6,13 @@ import com.school.management.dto.StudentDTO;
 import com.school.management.mapper.GroupMapper;
 import com.school.management.mapper.StudentMapper;
 import com.school.management.persistance.GroupEntity;
+import com.school.management.persistance.StudentEntity;
+import com.school.management.persistance.StudentGroupEntity;
 import com.school.management.repository.GroupRepository;
+import com.school.management.repository.StudentGroupRepository;
 import com.school.management.service.exception.CustomServiceException;
 import com.school.management.service.interfaces.GroupService;
+import io.swagger.v3.core.util.ReflectionUtils;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +21,10 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.lang.reflect.Field;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -30,17 +37,20 @@ public class GroupServiceImpl implements GroupService {
     private final ModelMapper modelMapper;
     private final GroupSearchService groupSearchService;
 
+    private final StudentGroupRepository studentGroupRepository;
+
     @Autowired
     public GroupServiceImpl(GroupRepository groupRepository,
                             GroupMapper groupMapper,
                             StudentMapper studentMapper,
                             ModelMapper modelMapper,
-                            GroupSearchService groupSearchService) {
+                            GroupSearchService groupSearchService, StudentGroupRepository studentGroupRepository) {
         this.groupRepository = groupRepository;
         this.groupMapper = groupMapper;
         this.studentMapper = studentMapper;
         this.modelMapper = modelMapper;
         this.groupSearchService = groupSearchService;
+        this.studentGroupRepository = studentGroupRepository;
     }
 
     public List<GroupEntity> findByTeacherId(Long teacherId) {
@@ -107,14 +117,17 @@ public class GroupServiceImpl implements GroupService {
                 .toList();
     }
 
-    @Transactional(readOnly = true)
-    public List<StudentDTO> getStudentsByGroupId(Long groupId) {
-        GroupEntity group = groupRepository.findById(groupId)
-                .orElseThrow(() -> new CustomServiceException(GROUP_NOT_FOUND + groupId));
-        return group.getStudents().stream()
-                .map(studentMapper::studentToStudentDTO)
-                .toList();
-    }
+
+
+   /*Override
+    public GroupEntity updateGroupPartially(Long id, Map<String, Object> updates) {
+        GroupEntity existingGroup = groupRepository.findById(id)
+                .orElseThrow(() -> new CustomServiceException("Group not found with id: " + id));
+
+        groupMapper.updateGroupFromDto(groupDTO, existingGroup);
+
+        return groupRepository.save(existingGroup);
+    }*/
 
     @Transactional(readOnly = true)
     public Long countStudentsInGroup(Long groupId) {
@@ -126,5 +139,14 @@ public class GroupServiceImpl implements GroupService {
     public GroupEntity getGroupWithDetails(Long groupId) {
         return groupRepository.findGroupWithDetailsById(groupId)
                 .orElseThrow(() -> new RuntimeException(GROUP_NOT_FOUND + groupId));
+    }
+
+    @Transactional(readOnly = true)
+    public List<StudentDTO> getActiveStudentsByGroupId(Long groupId) {
+        groupRepository.findById(groupId)
+                .orElseThrow(() -> new CustomServiceException(GROUP_NOT_FOUND + groupId));
+        return studentGroupRepository.findByGroupIdAndActiveTrue(groupId).stream()
+                .map(studentGroup -> studentMapper.studentToStudentDTO(studentGroup.getStudent()))
+                .toList();
     }
 }

@@ -1,8 +1,8 @@
 package com.school.management.controller;
 
 import com.school.management.persistance.StudentEntity;
-import com.school.management.service.StudentPdfService;
-import com.school.management.service.StudentService;
+import com.school.management.service.student.StudentPdfService;
+import com.school.management.service.student.StudentService;
 import com.school.management.service.exception.CustomServiceException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;

@@ -47,4 +47,9 @@ public class SessionSeriesDto implements Serializable {
 
     private Date serieTimeStart;
     private Date serieTimeEnd;
+
+    // Ajouter cette propriété
+    private int numberOfSessionsCreated;
+
+
 }

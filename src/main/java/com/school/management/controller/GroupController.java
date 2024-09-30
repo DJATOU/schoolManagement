@@ -5,7 +5,7 @@ import com.school.management.dto.SessionSeriesDto;
 import com.school.management.dto.StudentDTO;
 import com.school.management.mapper.GroupMapper;
 import com.school.management.persistance.GroupEntity;
-import com.school.management.service.GroupServiceImpl;
+import com.school.management.service.group.GroupServiceImpl;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -154,9 +154,10 @@ public class GroupController {
         return ResponseEntity.ok(sessionSeries);
     }
 
+    // In `GroupController.java`
     @GetMapping("/{groupId}/students")
-    public ResponseEntity<List<StudentDTO>> getStudentsByGroupId(@PathVariable Long groupId) {
-        List<StudentDTO> students = groupService.getStudentsByGroupId(groupId);
+    public ResponseEntity<List<StudentDTO>> getActiveStudentsByGroupId(@PathVariable Long groupId) {
+        List<StudentDTO> students = groupService.getActiveStudentsByGroupId(groupId);
         return ResponseEntity.ok(students);
     }
 

@@ -21,6 +21,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -192,7 +193,8 @@ public class PaymentController {
                         status.getTutorId(),
                         status.getEstablishment(),
                         status.getAverageScore(),
-                        status.isPaymentOverdue()))
+                        status.isPaymentOverdue(),
+                        status.getActive()))
                 .toList();
         return ResponseEntity.ok(paymentStatusDTOList);
     }
@@ -227,6 +229,13 @@ public class PaymentController {
             @PathVariable Long sessionSeriesId) {
         List<PaymentDTO> paymentHistory = paymentService.getPaymentHistoryForSeries(studentId, sessionSeriesId);
         return ResponseEntity.ok(paymentHistory);
+    }
+
+    @ExceptionHandler(CustomServiceException.class)
+    public ResponseEntity<Map<String, String>> handleCustomServiceException(CustomServiceException ex) {
+        Map<String, String> errorResponse = new HashMap<>();
+        errorResponse.put("message", ex.getMessage());
+        return new ResponseEntity<>(errorResponse, ex.getStatus());
     }
 
 }

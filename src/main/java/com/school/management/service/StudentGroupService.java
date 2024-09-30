@@ -1,7 +1,9 @@
 package com.school.management.service;
 
+import com.school.management.dto.GroupDTO;
 import com.school.management.dto.StudentDTO;
 import com.school.management.dto.StudentGroupDTO;
+import com.school.management.mapper.GroupMapper;
 import com.school.management.persistance.GroupEntity;
 import com.school.management.persistance.StudentEntity;
 import com.school.management.persistance.StudentGroupEntity;
@@ -27,13 +29,17 @@ public class StudentGroupService {
     private final StudentRepository studentRepository;
     private final GroupRepository groupRepository;
 
+    private final GroupMapper groupMapper;
+
     @Autowired
     public StudentGroupService(StudentGroupRepository studentGroupRepository,
                                StudentRepository studentRepository,
-                               GroupRepository groupRepository) {
+                               GroupRepository groupRepository,
+                               GroupMapper groupMapper){
         this.studentGroupRepository = studentGroupRepository;
         this.studentRepository = studentRepository;
         this.groupRepository = groupRepository;
+        this.groupMapper = groupMapper;
     }
 
     @Transactional
@@ -121,5 +127,23 @@ public class StudentGroupService {
                         .firstName(sg.getStudent().getFirstName())
                         .build())
                 .collect(Collectors.toList());
+    }
+
+    // In `StudentGroupService.java`
+    @Transactional
+    public void removeStudentFromGroup(Long groupId, Long studentId) {
+        StudentGroupEntity studentGroup = studentGroupRepository.findByGroupIdAndStudentId(groupId, studentId)
+                .orElseThrow(() -> new EntityNotFoundException("StudentGroup not found for groupId " + groupId + " and studentId " + studentId));
+        studentGroup.setActive(false);
+        studentGroupRepository.save(studentGroup);
+    }
+
+    // In `StudentGroupService.java`
+    @Transactional(readOnly = true)
+    public List<GroupDTO> getGroupsOfStudent(Long studentId) {
+        List<StudentGroupEntity> studentGroups = studentGroupRepository.findByStudentIdAndActiveTrue(studentId);
+        return studentGroups.stream()
+                .map(studentGroup -> groupMapper.groupToGroupDTO(studentGroup.getGroup()))
+                .toList();
     }
 }

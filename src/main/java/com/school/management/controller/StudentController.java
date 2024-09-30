@@ -6,7 +6,7 @@ import com.school.management.mapper.GroupMapper;
 import com.school.management.mapper.StudentMapper;
 import com.school.management.persistance.StudentEntity;
 import com.school.management.persistance.TutorEntity;
-import com.school.management.service.StudentService;
+import com.school.management.service.student.StudentService;
 import com.school.management.service.exception.CustomServiceException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -88,11 +88,20 @@ public class StudentController {
 
     @PutMapping("/{id}")
     public ResponseEntity<StudentDTO> updateStudent(@PathVariable Long id, @Valid @RequestBody StudentDTO studentDto) {
-        StudentEntity student = studentMapper.studentDTOToStudent(studentDto);
-        student.setId(id);
-        StudentEntity updatedStudent = studentService.save(student);
+        // Récupérer l'étudiant existant depuis la base de données
+        StudentEntity existingStudent = studentService.findById(id)
+                .orElseThrow(() -> new CustomServiceException("Student not found with id: " + id));
+
+        // Mettre à jour l'entité existante avec les valeurs du DTO
+        studentMapper.updateStudentFromDTO(studentDto, existingStudent);
+
+        // Sauvegarder l'entité mise à jour
+        StudentEntity updatedStudent = studentService.save(existingStudent);
+
+        // Retourner le DTO mis à jour
         return ResponseEntity.ok(studentMapper.studentToStudentDTO(updatedStudent));
     }
+
 
     @Transactional(readOnly = true)
     @GetMapping

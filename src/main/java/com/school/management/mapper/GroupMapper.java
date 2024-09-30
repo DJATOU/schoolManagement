@@ -4,10 +4,7 @@ import com.school.management.dto.GroupDTO;
 import com.school.management.persistance.*;
 import com.school.management.repository.*;
 import com.school.management.service.exception.CustomServiceException;
-import org.mapstruct.Builder;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.Named;
+import org.mapstruct.*;
 
 @Mapper(componentModel = "spring",  builder = @Builder())
 public interface GroupMapper {
@@ -30,6 +27,9 @@ public interface GroupMapper {
     @Mapping(source = "priceId", target = "price", qualifiedByName = "idToPricing")
     @Mapping(source = "teacherId", target = "teacher", qualifiedByName = "idToTeacher")
     GroupEntity groupDTOToGroup(GroupDTO groupDto);
+
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    void updateGroupFromDto(GroupDTO dto, @MappingTarget GroupEntity entity);
 
     @Named("idToGroupType")
     default GroupTypeEntity idToGroupType(Long id) {

@@ -1,4 +1,4 @@
-package com.school.management.service;
+package com.school.management.service.student;
 
 import com.school.management.persistance.StudentEntity;
 import jakarta.persistence.EntityManager;

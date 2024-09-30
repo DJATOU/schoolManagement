@@ -1,5 +1,6 @@
 package com.school.management.controller;
 
+import com.school.management.dto.GroupDTO;
 import com.school.management.dto.StudentDTO;
 import com.school.management.dto.StudentGroupDTO;
 import com.school.management.service.StudentGroupService;
@@ -55,6 +56,12 @@ public class StudentGroupController {
         return ResponseEntity.ok(students);
     }
 
+    @GetMapping("/{studentId}/groups")
+    public ResponseEntity<List<GroupDTO>> getGroupsOfStudent(@PathVariable Long studentId) {
+        List<GroupDTO> groups = studentGroupService.getGroupsOfStudent(studentId);
+        return ResponseEntity.ok(groups);
+    }
+
     private ResponseEntity<Map<String, Object>> handleGroupAssociation(Runnable associationTask) {
         try {
             associationTask.run();
@@ -79,4 +86,18 @@ public class StudentGroupController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
+
+    // In `StudentGroupController.java`
+    @DeleteMapping("/{groupId}/students/{studentId}")
+    public ResponseEntity<Map<String, Object>> removeStudentFromGroup(@PathVariable Long groupId, @PathVariable Long studentId) {
+        logger.info("Received request to remove student {} from group {}", studentId, groupId);
+        studentGroupService.removeStudentFromGroup(groupId, studentId);
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "Student removed from group successfully");
+        return ResponseEntity.ok(response);
+    }
+
+
+    // In `StudentGroupService.java`
+
 }

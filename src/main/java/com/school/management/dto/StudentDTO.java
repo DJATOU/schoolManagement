@@ -53,5 +53,7 @@ public class StudentDTO {
     @Max(100)
     private Double averageScore;
 
+    private Boolean active; // Ajouter ce champ
+
 
 }
