@@ -1,10 +1,12 @@
 package com.school.management.persistance;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -51,11 +53,14 @@ public class SessionEntity extends BaseEntity {
     @JoinColumn(name = "room_id")
     private RoomEntity room;
 
-    @OneToMany(mappedBy = "session")
-    private Set<AttendanceEntity> attendances ;
-
     @ManyToOne
     @JoinColumn(name = "session_series_id")
     private SessionSeriesEntity sessionSeries;
+
+    @OneToMany(mappedBy = "session", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Set<PaymentDetailEntity> paymentDetails = new HashSet<>();
+
+    @OneToMany(mappedBy = "session", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Set<AttendanceEntity> attendances = new HashSet<>();
 
 }

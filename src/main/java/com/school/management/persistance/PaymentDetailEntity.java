@@ -19,13 +19,13 @@ public class PaymentDetailEntity extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "payment_id", nullable = false)
-    private PaymentEntity payment; // Référence au paiement auquel cette entrée est associée
+    private PaymentEntity payment;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "session_id")
-    private SessionEntity session; // Référence à la session si le paiement est lié à une session spécifique
+    private SessionEntity session;
 
     @Column(name = "amount_paid", nullable = false)
     private Double amountPaid; // Le montant payé pour cette entrée

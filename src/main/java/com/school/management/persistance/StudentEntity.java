@@ -19,6 +19,37 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
+@NamedEntityGraph(
+        name = "Student.withAllData",
+        attributeNodes = {
+                @NamedAttributeNode("groups"),
+                @NamedAttributeNode(value = "groups", subgraph = "groups.series")
+        },
+        subgraphs = {
+                @NamedSubgraph(
+                        name = "groups.series",
+                        attributeNodes = {
+                                @NamedAttributeNode("series"),
+                                @NamedAttributeNode(value = "series", subgraph = "series.sessions")
+                        }
+                ),
+                @NamedSubgraph(
+                        name = "series.sessions",
+                        attributeNodes = {
+                                @NamedAttributeNode("sessions"),
+                                @NamedAttributeNode(value = "sessions", subgraph = "sessions.details")
+                        }
+                ),
+                @NamedSubgraph(
+                        name = "sessions.details",
+                        attributeNodes = {
+                                @NamedAttributeNode("attendances"),
+                                @NamedAttributeNode("paymentDetails")
+                        }
+                )
+        }
+)
+
 public class StudentEntity extends PersonEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)

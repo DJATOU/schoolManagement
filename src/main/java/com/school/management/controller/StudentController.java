@@ -2,10 +2,12 @@ package com.school.management.controller;
 
 import com.school.management.dto.GroupDTO;
 import com.school.management.dto.StudentDTO;
+import com.school.management.dto.student.StudentFullHistoryDTO;
 import com.school.management.mapper.GroupMapper;
 import com.school.management.mapper.StudentMapper;
 import com.school.management.persistance.StudentEntity;
 import com.school.management.persistance.TutorEntity;
+import com.school.management.service.student.StudentHistoryService;
 import com.school.management.service.student.StudentService;
 import com.school.management.service.exception.CustomServiceException;
 import jakarta.validation.Valid;
@@ -43,11 +45,14 @@ public class StudentController {
     private final StudentMapper studentMapper;
     private final GroupMapper groupMapper;
 
+    private final StudentHistoryService studentHistoryService;
+
     @Autowired
-    public StudentController(StudentService studentService, StudentMapper studentMapper, GroupMapper groupMapper) {
+    public StudentController(StudentService studentService, StudentMapper studentMapper, GroupMapper groupMapper, StudentHistoryService studentHistoryService) {
         this.studentService = studentService;
         this.studentMapper = studentMapper;
         this.groupMapper = groupMapper;
+        this.studentHistoryService = studentHistoryService;
     }
 
 
@@ -235,6 +240,11 @@ public class StudentController {
 
 
 
+    @GetMapping("/{studentId}/full-history")
+    public ResponseEntity<StudentFullHistoryDTO> getStudentFullHistory(@PathVariable Long studentId) {
+        StudentFullHistoryDTO fullHistory = studentHistoryService.getStudentFullHistory(studentId);
+        return ResponseEntity.ok(fullHistory);
+    }
 
 
 }
