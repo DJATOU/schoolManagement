@@ -22,10 +22,6 @@ public class AttendanceService {
         this.attendanceMapper = attendanceMapper;
     }
 
-    public List<AttendanceEntity> getAllAttendancesold() {
-        return attendanceRepository.findAll();
-    }
-
     public List<AttendanceDTO> getAllAttendances() {
         List<AttendanceEntity> attendances = attendanceRepository.findAll();
         return attendances.stream()
@@ -67,15 +63,6 @@ public class AttendanceService {
         return attendanceRepository.saveAll(attendances);
     }
 
-    public List<AttendanceDTO> getAttendanceBySessionIdTrueOrFalse(Long sessionId) {
-        List<AttendanceEntity> attendances = attendanceRepository.findBySessionId(sessionId);
-        return attendances.stream()
-                .map(attendanceMapper::attendanceToAttendanceDTO)
-                .toList();
-    }
-
-
-
     @Transactional
     public void deleteBySessionId(Long sessionId) {
         attendanceRepository.deleteBySessionId(sessionId);
@@ -98,11 +85,6 @@ public class AttendanceService {
 
     public List<AttendanceDTO> getAttendanceByStudentAndSeries(Long studentId, Long sessionSeriesId) {
         List<AttendanceEntity> attendanceEntities = attendanceRepository.findByStudentIdAndSessionSeriesIdAndActiveTrue(studentId, sessionSeriesId);
-        if (attendanceEntities.isEmpty()) {
-            System.out.println("No attendance records found for student ID " + studentId + " and series ID " + sessionSeriesId);
-        } else {
-            System.out.println("Attendance records found: " + attendanceEntities.size());
-        }
         return attendanceEntities.stream()
                 .map(attendanceMapper::attendanceToAttendanceDTO)
                 .toList();

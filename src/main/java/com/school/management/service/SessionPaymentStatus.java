@@ -18,5 +18,6 @@ public class SessionPaymentStatus {
         this.isPaymentOverdue = isOverdue;
     }
 
-    // getters, setters, et constructeurs
+    // Getters and setters
+
 }

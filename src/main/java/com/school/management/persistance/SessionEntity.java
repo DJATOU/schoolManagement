@@ -1,10 +1,8 @@
 package com.school.management.persistance;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
@@ -58,9 +56,11 @@ public class SessionEntity extends BaseEntity {
     private SessionSeriesEntity sessionSeries;
 
     @OneToMany(mappedBy = "session", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Builder.Default
     private Set<PaymentDetailEntity> paymentDetails = new HashSet<>();
 
     @OneToMany(mappedBy = "session", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Builder.Default
     private Set<AttendanceEntity> attendances = new HashSet<>();
 
 }

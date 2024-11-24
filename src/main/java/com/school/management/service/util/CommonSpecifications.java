@@ -20,18 +20,21 @@ public class CommonSpecifications {
     public static <T> Specification<T> greaterThanOrEqualToIfNotNull(String attributeName, Comparable<?> value) {
         return (root, query, cb) -> {
             if (value == null) return null;
-            if (value instanceof Integer integer) {
-                Path<Integer> integerPath = root.get(attributeName);
-                return cb.greaterThanOrEqualTo(integerPath, integer);
-            } else
-            if (value instanceof LocalDate localDate) {
-                Path<LocalDate> datePath = root.get(attributeName);
-                return cb.greaterThanOrEqualTo(datePath, localDate);
-            } else if (value instanceof String string) {
-                Path<String> stringPath = root.get(attributeName);
-                return cb.greaterThanOrEqualTo(stringPath, string);
+            switch (value) {
+                case Integer integer -> {
+                    Path<Integer> integerPath = root.get(attributeName);
+                    return cb.greaterThanOrEqualTo(integerPath, integer);
+                }
+                case LocalDate localDate -> {
+                    Path<LocalDate> datePath = root.get(attributeName);
+                    return cb.greaterThanOrEqualTo(datePath, localDate);
+                }
+                case String string -> {
+                    Path<String> stringPath = root.get(attributeName);
+                    return cb.greaterThanOrEqualTo(stringPath, string);
+                }
+                default -> throw new IllegalStateException("Unexpected value: " + value);
             }
-            return null;
         };
     }
 

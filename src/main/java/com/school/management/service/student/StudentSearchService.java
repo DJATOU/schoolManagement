@@ -1,3 +1,4 @@
+// In `StudentSearchService.java`
 package com.school.management.service.student;
 
 import com.school.management.persistance.StudentEntity;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Locale;
 
 @Service
 public class StudentSearchService {
@@ -29,31 +31,38 @@ public class StudentSearchService {
         CriteriaQuery<StudentEntity> cq = cb.createQuery(StudentEntity.class);
         Root<StudentEntity> student = cq.from(StudentEntity.class);
 
-        // Normalize and split input by spaces
-        String[] nameParts = input.trim().toLowerCase().split("\\s+");
-        Predicate finalPredicate;
-
-        if (nameParts.length == 1) {
-            String pattern = nameParts[0] + "%";
-            // Search either first or last name if only one name part is provided
-            Predicate firstNamePredicate = cb.like(cb.lower(student.get("firstName")), pattern);
-            Predicate lastNamePredicate = cb.like(cb.lower(student.get("lastName")), pattern);
-            finalPredicate = cb.or(firstNamePredicate, lastNamePredicate);
-        } else {
-            // Assume the first part is the first name and the second part is the last name for simplicity
-            String firstNamePattern = nameParts[0] + "%";
-            String lastNamePattern = nameParts[1] + "%";
-            Predicate firstNamePredicate = cb.like(cb.lower(student.get("firstName")), firstNamePattern);
-            Predicate lastNamePredicate = cb.like(cb.lower(student.get("lastName")), lastNamePattern);
-
-            // Apply both conditions
-            finalPredicate = cb.and(firstNamePredicate, lastNamePredicate);
-        }
+        Predicate finalPredicate = buildNamePredicate(input, cb, student);
 
         cq.where(finalPredicate);
 
         // Execute the query
         TypedQuery<StudentEntity> query = entityManager.createQuery(cq);
         return query.getResultList();
+    }
+
+    private static Predicate buildNamePredicate(String input, CriteriaBuilder cb, Root<StudentEntity> student) {
+        String[] nameParts = toLowerCaseLocaleIndependent(input).split("\\s+");
+        return buildFinalPredicate(nameParts, cb, student);
+    }
+
+    private static Predicate buildFinalPredicate(String[] nameParts, CriteriaBuilder cb, Root<StudentEntity> student) {
+        Predicate finalPredicate;
+        if (nameParts.length == 1) {
+            String pattern = nameParts[0] + "%";
+            Predicate firstNamePredicate = cb.like(cb.lower(student.get("firstName")), pattern);
+            Predicate lastNamePredicate = cb.like(cb.lower(student.get("lastName")), pattern);
+            finalPredicate = cb.or(firstNamePredicate, lastNamePredicate);
+        } else {
+            String firstNamePattern = nameParts[0] + "%";
+            String lastNamePattern = nameParts[1] + "%";
+            Predicate firstNamePredicate = cb.like(cb.lower(student.get("firstName")), firstNamePattern);
+            Predicate lastNamePredicate = cb.like(cb.lower(student.get("lastName")), lastNamePattern);
+            finalPredicate = cb.and(firstNamePredicate, lastNamePredicate);
+        }
+        return finalPredicate;
+    }
+
+    private static String toLowerCaseLocaleIndependent(String input) {
+        return input.toLowerCase(Locale.ROOT);
     }
 }

@@ -1,4 +1,3 @@
-// Corrected StudentHistoryService.java
 package com.school.management.service.student;
 
 import com.school.management.dto.group.GroupHistoryDTO;
@@ -8,18 +7,19 @@ import com.school.management.dto.student.StudentFullHistoryDTO;
 import com.school.management.persistance.*;
 import com.school.management.repository.StudentRepository;
 import jakarta.persistence.EntityNotFoundException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class StudentHistoryService {
 
-    @Autowired
-    private StudentRepository studentRepository;
+    private final StudentRepository studentRepository;
+
+    public StudentHistoryService(StudentRepository studentRepository) {
+        this.studentRepository = studentRepository;
+    }
 
     public StudentFullHistoryDTO getStudentFullHistory(Long studentId) {
         StudentEntity student = studentRepository.findById(studentId)
@@ -35,7 +35,7 @@ public class StudentHistoryService {
 
         List<GroupHistoryDTO> groupDTOs = student.getGroups().stream()
                 .map(group -> mapGroupEntityToDTO(group, student))
-                .collect(Collectors.toList());
+                .toList();
 
         dto.setGroups(groupDTOs);
 
@@ -49,7 +49,7 @@ public class StudentHistoryService {
 
         List<SeriesHistoryDTO> seriesDTOs = group.getSeries().stream()
                 .map(series -> mapSeriesEntityToDTO(series, student, group))
-                .collect(Collectors.toList());
+                .toList();
 
         dto.setSeries(seriesDTOs);
 
@@ -62,7 +62,7 @@ public class StudentHistoryService {
         dto.setSeriesName(series.getName());
 
         double totalPaidForSeries = calculateTotalPaidForSeries(series, student);
-        double totalCostOfSeries = calculateTotalCostOfSeries(series, group);
+        double totalCostOfSeries = calculateTotalCostOfSeries(group);
 
         if (totalPaidForSeries >= totalCostOfSeries) {
             dto.setPaymentStatus("Complet");
@@ -75,11 +75,11 @@ public class StudentHistoryService {
 
         List<SessionEntity> sortedSessions = series.getSessions().stream()
                 .sorted(Comparator.comparing(SessionEntity::getSessionTimeStart))
-                .collect(Collectors.toList());
+                .toList();
 
         List<SessionHistoryDTO> sessionDTOs = sortedSessions.stream()
                 .map(session -> mapSessionEntityToDTO(session, student))
-                .collect(Collectors.toList());
+                .toList();
 
         dto.setSessions(sessionDTOs);
 
@@ -94,7 +94,7 @@ public class StudentHistoryService {
                 .sum();
     }
 
-    private double calculateTotalCostOfSeries(SessionSeriesEntity series, GroupEntity group) {
+    private double calculateTotalCostOfSeries(GroupEntity group) {
         double pricePerSession = group.getPrice().getPrice();
         int sessionNumberPerSerie = group.getSessionNumberPerSerie();
         return pricePerSession * sessionNumberPerSerie;

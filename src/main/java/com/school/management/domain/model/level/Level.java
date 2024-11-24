@@ -1,4 +1,4 @@
-package com.school.management.domain.level;
+package com.school.management.domain.model.level;
 
 
 public enum Level {

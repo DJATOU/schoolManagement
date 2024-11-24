@@ -38,4 +38,7 @@ public class AttendanceEntity extends BaseEntity {
 
     @Column(name = "is_justified")
     private Boolean isJustified;
+
+    @Column(name = "is_catch_up")
+    private Boolean isCatchUp = false;
 }

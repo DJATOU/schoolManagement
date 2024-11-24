@@ -1,9 +1,6 @@
-package com.school.management.domain.group;
+package com.school.management.domain.model.group;
 
-import com.school.management.domain.student.Student;
 import lombok.*;
-
-import java.util.Set;
 
 @Getter
 @Setter(AccessLevel.PRIVATE) // Keeping setters private to control state changes through methods
@@ -20,6 +17,5 @@ public class Group {
     private Integer sessionCount;
     private Double sessionPrice;
     private Long teacherId;
-    private Set<Student> students;
 
 }

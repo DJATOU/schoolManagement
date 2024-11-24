@@ -27,7 +27,7 @@ public class AttendanceDTO {
     private String updatedBy;
     private Boolean active;
     private String description;
-
+    private Boolean isCatchUp;
 
     // Additional fields if necessary...
 }

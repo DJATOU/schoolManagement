@@ -34,6 +34,9 @@ public class PaymentDetailEntity extends BaseEntity {
     @Temporal(TemporalType.TIMESTAMP)
     private Date paymentDate; // La date du paiement
 
+    @Column(name = "is_catch_up")
+    private Boolean isCatchUp = false;
+
     @Override
     protected void onCreate() {
         super.onCreate();

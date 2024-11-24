@@ -55,6 +55,7 @@ public class PaymentEntity extends BaseEntity {
     private GroupEntity group;
 
     @OneToMany(mappedBy = "payment", cascade = CascadeType.ALL)
+    @Builder.Default
     private List<PaymentDetailEntity> paymentDetails = new ArrayList<>();
 
     @Override
