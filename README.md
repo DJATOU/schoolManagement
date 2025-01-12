@@ -12,6 +12,6 @@ Key Features:
 Technologies Used:
 - Backend developed with Java, Spring Boot, and JPA/Hibernate.
 - PostgreSQL for database management.
-- Frontend (TBD/In Progress/Planned).
+- Frontend Angular.
 
 This project is designed to be scalable, flexible, and easy to use, catering to the diverse needs of educational institutions.
