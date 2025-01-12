@@ -13,4 +13,5 @@ public class GroupHistoryDTO {
     private Long groupId;
     private String groupName;
     private List<SeriesHistoryDTO> series;
+    private boolean isCatchUp;
 }

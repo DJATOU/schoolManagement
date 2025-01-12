@@ -54,4 +54,6 @@ public class GroupDTO {
     private String teacherName; // Add this field to hold the teacher's name
 
     private Set<Long> studentIds; // IDs of students in the group
+
+    private boolean isCatchUp;
 }

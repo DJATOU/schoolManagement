@@ -13,4 +13,5 @@ public class StudentFullHistoryDTO {
     private Long studentId;
     private String studentName;
     private List<GroupHistoryDTO> groups;
+    private boolean isCatchUp;
 }

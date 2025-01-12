@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -32,5 +33,9 @@ public interface AttendanceRepository extends JpaRepository<AttendanceEntity, Lo
     List<AttendanceEntity> findBySessionIdAndActiveTrue(Long sessionId);
 
     List<AttendanceEntity> findByStudentIdAndSessionSeriesIdAndActiveTrue(Long studentId, Long sessionSeriesId);
+
+    List<AttendanceEntity> findByStudentIdAndIsCatchUp(Long studentId, boolean isCatchUp);
+
+    boolean existsByGroupIdAndStudentIdAndIsCatchUp(Long id, Long studentId, boolean b);
 }
 

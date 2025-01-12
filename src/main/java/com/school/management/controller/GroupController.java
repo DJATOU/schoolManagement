@@ -4,6 +4,7 @@ import com.school.management.dto.GroupDTO;
 import com.school.management.dto.SessionSeriesDto;
 import com.school.management.dto.StudentDTO;
 import com.school.management.mapper.GroupMapper;
+import com.school.management.persistance.AttendanceEntity;
 import com.school.management.persistance.GroupEntity;
 import com.school.management.service.group.GroupServiceImpl;
 import jakarta.validation.Valid;
@@ -13,7 +14,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/groups")
@@ -167,6 +171,13 @@ public class GroupController {
         return ResponseEntity.ok(studentCount);
     }
 
+
+    @GetMapping("/{studentId}/groups-for-payment")
+    public ResponseEntity<List<GroupDTO>> getGroupsForPayment(@PathVariable Long studentId) {
+        // Le service renvoie déjà la liste de DTO directement
+        List<GroupDTO> groupDtos = groupService.getGroupsForPaymentDto(studentId);
+        return ResponseEntity.ok(groupDtos);
+    }
 
 
 

@@ -5,9 +5,11 @@ import com.school.management.dto.SessionSeriesDto;
 import com.school.management.dto.StudentDTO;
 import com.school.management.mapper.GroupMapper;
 import com.school.management.mapper.StudentMapper;
+import com.school.management.persistance.AttendanceEntity;
 import com.school.management.persistance.GroupEntity;
 import com.school.management.persistance.StudentEntity;
 import com.school.management.persistance.StudentGroupEntity;
+import com.school.management.repository.AttendanceRepository;
 import com.school.management.repository.GroupRepository;
 import com.school.management.repository.StudentGroupRepository;
 import com.school.management.service.exception.CustomServiceException;
@@ -22,10 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.lang.reflect.Field;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class GroupServiceImpl implements GroupService {
@@ -36,6 +35,7 @@ public class GroupServiceImpl implements GroupService {
     private final StudentMapper studentMapper;
     private final ModelMapper modelMapper;
     private final GroupSearchService groupSearchService;
+    private final AttendanceRepository attendanceRepository;
 
     private final StudentGroupRepository studentGroupRepository;
 
@@ -44,13 +44,14 @@ public class GroupServiceImpl implements GroupService {
                             GroupMapper groupMapper,
                             StudentMapper studentMapper,
                             ModelMapper modelMapper,
-                            GroupSearchService groupSearchService, StudentGroupRepository studentGroupRepository) {
+                            GroupSearchService groupSearchService, StudentGroupRepository studentGroupRepository, AttendanceRepository attendanceRepository) {
         this.groupRepository = groupRepository;
         this.groupMapper = groupMapper;
         this.studentMapper = studentMapper;
         this.modelMapper = modelMapper;
         this.groupSearchService = groupSearchService;
         this.studentGroupRepository = studentGroupRepository;
+        this.attendanceRepository = attendanceRepository;
     }
 
     public List<GroupEntity> findByTeacherId(Long teacherId) {
@@ -117,18 +118,6 @@ public class GroupServiceImpl implements GroupService {
                 .toList();
     }
 
-
-
-   /*Override
-    public GroupEntity updateGroupPartially(Long id, Map<String, Object> updates) {
-        GroupEntity existingGroup = groupRepository.findById(id)
-                .orElseThrow(() -> new CustomServiceException("Group not found with id: " + id));
-
-        groupMapper.updateGroupFromDto(groupDTO, existingGroup);
-
-        return groupRepository.save(existingGroup);
-    }*/
-
     @Transactional(readOnly = true)
     public Long countStudentsInGroup(Long groupId) {
         GroupEntity group = groupRepository.findById(groupId)
@@ -149,4 +138,40 @@ public class GroupServiceImpl implements GroupService {
                 .map(studentGroup -> studentMapper.studentToStudentDTO(studentGroup.getStudent()))
                 .toList();
     }
+
+    public List<GroupDTO> getGroupsForPaymentDto(Long studentId) {
+        // 1) Récupérer les GroupEntity (fixe + rattrapage)
+        List<GroupEntity> groups = this.getGroupsForPayment(studentId); // ta méthode existante
+
+        // 2) Construire la liste de DTO
+        return groups.stream()
+                .map(g -> {
+                    GroupDTO dto = groupMapper.groupToGroupDTO(g);
+
+                    // 3) Vérifier si isCatchUp
+                    boolean isCatchUp  = attendanceRepository
+                            .existsByGroupIdAndStudentIdAndIsCatchUp(g.getId(), studentId, true);
+                    dto.setCatchUp(isCatchUp);
+
+                    return dto;
+                })
+                .toList();
+    }
+
+    public List<GroupEntity> getGroupsForPayment(Long studentId) {
+        // (Ton code actuel)
+        List<GroupEntity> fixedGroups = groupRepository.findByStudents_Id(studentId);
+        List<GroupEntity> catchUpGroups = attendanceRepository
+                .findByStudentIdAndIsCatchUp(studentId, true)
+                .stream()
+                .map(AttendanceEntity::getGroup)
+                .distinct()
+                .toList();
+
+        Set<GroupEntity> unionSet = new HashSet<>(fixedGroups);
+        unionSet.addAll(catchUpGroups);
+
+        return new ArrayList<>(unionSet);
+    }
+
 }
