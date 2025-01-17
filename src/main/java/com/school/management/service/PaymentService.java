@@ -12,10 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -128,8 +125,6 @@ public class PaymentService {
         return totalSessions * pricePerSession;
     }
 
-
-
     private SessionSeriesEntity getSessionSeries(Long sessionSeriesId) {
         return sessionSeriesRepository.findById(sessionSeriesId)
                 .orElseThrow(() -> new RuntimeException("Series not found with ID: " + sessionSeriesId));
@@ -190,6 +185,11 @@ public class PaymentService {
 
     private void distributePayment(PaymentEntity payment, Long sessionSeriesId, double amountPaid) {
         List<SessionEntity> sessions = getSessionsForSeries(sessionSeriesId);
+
+        sessions = sessions.stream()
+                .sorted(Comparator.comparing(SessionEntity::getSessionTimeStart))
+                .toList();
+
         double remainingAmount = amountPaid;
 
         for (SessionEntity session : sessions) {
