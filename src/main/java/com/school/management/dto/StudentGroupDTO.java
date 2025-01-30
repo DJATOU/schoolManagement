@@ -30,7 +30,6 @@ public class StudentGroupDTO {
     @Size(max = 500, message = "Note cannot be longer than 500 characters.")
     private String description;
 
-    // Méthode pour vérifier si on ajoute un étudiant à des groupes
     public boolean isAddingStudentToGroups() {
         return studentId != null && groupIds != null && !groupIds.isEmpty();
     }

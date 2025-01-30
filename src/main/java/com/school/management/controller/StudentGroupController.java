@@ -9,10 +9,12 @@ import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,8 +37,6 @@ public class StudentGroupController {
     @PostMapping("/{studentId}/addGroups")
     public ResponseEntity<Map<String, Object>> addGroupsToStudent(@PathVariable Long studentId,
                                                                   @RequestBody StudentGroupDTO studentGroupDto) {
-        logger.info("Received request to add groups to student: {}", studentId);
-        logger.info("StudentGroupDTO: {}", studentGroupDto);
         studentGroupDto.setStudentId(studentId);
         return handleGroupAssociation(() -> studentGroupService.manageStudentGroupAssociations(studentGroupDto));
     }
@@ -44,8 +44,6 @@ public class StudentGroupController {
     @PostMapping("/{groupId}/addStudents")
     public ResponseEntity<Map<String, Object>> addStudentsToGroup(@PathVariable Long groupId,
                                                                   @RequestBody StudentGroupDTO studentGroupDto) {
-        logger.info("Received request to add students to group: {}", groupId);
-        logger.info("StudentGroupDTO: {}", studentGroupDto);
         studentGroupDto.setGroupId(groupId);
         return handleGroupAssociation(() -> studentGroupService.manageStudentGroupAssociations(studentGroupDto));
     }
@@ -55,6 +53,16 @@ public class StudentGroupController {
         List<StudentDTO> students = studentGroupService.getStudentsByGroupId(groupId);
         return ResponseEntity.ok(students);
     }
+
+    @GetMapping("/{groupId}/studentsForSession")
+    public ResponseEntity<List<StudentDTO>> getStudentsForSession(
+            @PathVariable Long groupId,
+            @RequestParam("date") @DateTimeFormat(iso=DateTimeFormat.ISO.DATE_TIME) Date sessionDate) {
+
+        List<StudentDTO> students = studentGroupService.getStudentsForSession(groupId, sessionDate);
+        return ResponseEntity.ok(students);
+    }
+
 
     @GetMapping("/{studentId}/groups")
     public ResponseEntity<List<GroupDTO>> getGroupsOfStudent(@PathVariable Long studentId) {
@@ -87,7 +95,6 @@ public class StudentGroupController {
         }
     }
 
-    // In `StudentGroupController.java`
     @DeleteMapping("/{groupId}/students/{studentId}")
     public ResponseEntity<Map<String, Object>> removeStudentFromGroup(@PathVariable Long groupId, @PathVariable Long studentId) {
         logger.info("Received request to remove student {} from group {}", studentId, groupId);
@@ -96,8 +103,5 @@ public class StudentGroupController {
         response.put("message", "Student removed from group successfully");
         return ResponseEntity.ok(response);
     }
-
-
-    // In `StudentGroupService.java`
 
 }

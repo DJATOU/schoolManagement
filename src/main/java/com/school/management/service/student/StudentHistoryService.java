@@ -11,6 +11,7 @@ import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class StudentHistoryService {
@@ -24,21 +25,23 @@ public class StudentHistoryService {
     }
 
     public StudentFullHistoryDTO getStudentFullHistory(Long studentId) {
+        // Récupérer l'étudiant
         StudentEntity student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new EntityNotFoundException("Étudiant non trouvé"));
 
         return mapStudentEntityToDTO(student);
     }
 
+    // ===================== mapStudentEntityToDTO ======================
     private StudentFullHistoryDTO mapStudentEntityToDTO(StudentEntity student) {
         StudentFullHistoryDTO dto = new StudentFullHistoryDTO();
         dto.setStudentId(student.getId());
         dto.setStudentName(student.getFirstName() + " " + student.getLastName());
 
-        // 1) Groupes fixes
+        // 1) Groupes fixes : ceux où l'étudiant est officiellement inscrit
         List<GroupEntity> fixedGroups = new ArrayList<>(student.getGroups());
 
-        // 2) Groupes de rattrapage
+        // 2) Groupes "rattrapage" (où attendance.isCatchUp = true pour l'étudiant)
         List<GroupEntity> catchUpGroups = attendanceRepository
                 .findByStudentIdAndIsCatchUp(student.getId(), true)
                 .stream()
@@ -46,42 +49,39 @@ public class StudentHistoryService {
                 .distinct()
                 .toList();
 
-        // 3) Union
+        // 3) Union des deux
         Set<GroupEntity> unionSet = new HashSet<>(fixedGroups);
         unionSet.addAll(catchUpGroups);
 
         // 4) Construire la liste de GroupHistoryDTO
         List<GroupHistoryDTO> groupDTOs = unionSet.stream()
                 .map(group -> mapGroupEntityToDTO(group, student))
-                // Optionnel : trier par ordre alphabétique
-                //.sorted(Comparator.comparing(GroupEntity::getName))
                 .toList();
 
         dto.setGroups(groupDTOs);
-
         return dto;
     }
 
+    // ===================== mapGroupEntityToDTO ======================
     private GroupHistoryDTO mapGroupEntityToDTO(GroupEntity group, StudentEntity student) {
         GroupHistoryDTO dto = new GroupHistoryDTO();
         dto.setGroupId(group.getId());
         dto.setGroupName(group.getName());
 
-        // Savoir si l'étudiant est officiellement inscrit à ce group
+        // Savoir si l'étudiant est inscrit officiellement à ce groupe
         boolean isOfficial = student.getGroups().contains(group);
 
+        // Convertir les séries en SeriesHistoryDTO, en filtrant si besoin
         List<SeriesHistoryDTO> seriesDTOs = group.getSeries().stream()
                 .map(series -> mapSeriesEntityToDTO(series, student, group, isOfficial))
+                .filter(Objects::nonNull)  // on enlève les séries qui n'ont aucune session pertinente
                 .toList();
 
-        boolean isCatchUp = attendanceRepository
-                .existsByGroupIdAndStudentIdAndIsCatchUp(group.getId(), student.getId(), true);
-        dto.setCatchUp(isCatchUp);
         dto.setSeries(seriesDTOs);
         return dto;
     }
 
-
+    // ===================== mapSeriesEntityToDTO ======================
     private SeriesHistoryDTO mapSeriesEntityToDTO(SessionSeriesEntity series,
                                                   StudentEntity student,
                                                   GroupEntity group,
@@ -93,31 +93,45 @@ public class StudentHistoryService {
         double totalPaidForSeries = calculateTotalPaidForSeries(series, student);
         double totalCostOfSeries = calculateTotalCostOfSeries(group);
 
+        // Statut de paiement global de la série
         dto.setPaymentStatus(totalPaidForSeries >= totalCostOfSeries ? "Complet" : "Partiel");
         dto.setTotalAmountPaid(totalPaidForSeries);
         dto.setTotalCost(totalCostOfSeries);
 
+        // Récupérer toutes les sessions de la série
         List<SessionEntity> allSessions = series.getSessions().stream()
                 .sorted(Comparator.comparing(SessionEntity::getSessionTimeStart))
                 .toList();
 
+        // 1) Filtre sessions où l'étudiant a AU MOINS un attendance OU un paiement
+        List<SessionEntity> relevantSessions = allSessions.stream()
+                .filter(session -> {
+                    boolean hasAttendance = session.getAttendances().stream()
+                            .anyMatch(a -> a.getStudent().getId().equals(student.getId()) && a.isActive());
+                    boolean hasPayment = session.getPaymentDetails().stream()
+                            .anyMatch(pd -> pd.getPayment().getStudent().getId().equals(student.getId()));
+                    return hasAttendance || hasPayment;
+                })
+                .toList();
+
+        // 2) Si le groupe est "officiel", on garde le relevantSessions
+        //    Sinon, on re-filtre pour ne conserver que ceux où l'étudiant a réellement un attendance (rattrapage)
         List<SessionEntity> filteredSessions;
         if (isOfficial) {
-            // L'étudiant est inscrit, on garde toutes les sessions
-            filteredSessions = allSessions;
+            filteredSessions = relevantSessions;
         } else {
-            // L'étudiant n'est pas inscrit, donc c'est un "rattrapage" =>
-            //  on ne garde que les sessions où il a un AttendanceEntity
-            filteredSessions = allSessions.stream()
+            filteredSessions = relevantSessions.stream()
                     .filter(session -> session.getAttendances().stream()
-                            .anyMatch(a ->
-                                    a.getStudent().getId().equals(student.getId())
-                                            && a.isActive()
-                            )
-                    )
+                            .anyMatch(a -> a.getStudent().getId().equals(student.getId()) && a.isActive()))
                     .toList();
         }
 
+        // 3) Si le résultat est VIDE => on ne retourne pas cette série (on renvoie null)
+        if (filteredSessions.isEmpty()) {
+            return null;  // => la série n'apparaîtra pas dans le PDF
+        }
+
+        // 4) Construire la liste finale de SessionHistoryDTO
         List<SessionHistoryDTO> sessionDTOs = filteredSessions.stream()
                 .map(session -> mapSessionEntityToDTO(session, student))
                 .toList();
@@ -126,21 +140,7 @@ public class StudentHistoryService {
         return dto;
     }
 
-
-    private double calculateTotalPaidForSeries(SessionSeriesEntity series, StudentEntity student) {
-        return series.getSessions().stream()
-                .flatMap(session -> session.getPaymentDetails().stream())
-                .filter(pd -> pd.getPayment().getStudent().getId().equals(student.getId()))
-                .mapToDouble(PaymentDetailEntity::getAmountPaid)
-                .sum();
-    }
-
-    private double calculateTotalCostOfSeries(GroupEntity group) {
-        double pricePerSession = group.getPrice().getPrice();
-        int sessionNumberPerSerie = group.getSessionNumberPerSerie();
-        return pricePerSession * sessionNumberPerSerie;
-    }
-
+    // ===================== mapSessionEntityToDTO ======================
     private SessionHistoryDTO mapSessionEntityToDTO(SessionEntity session, StudentEntity student) {
         SessionHistoryDTO dto = new SessionHistoryDTO();
 
@@ -148,10 +148,8 @@ public class StudentHistoryService {
         if (Boolean.FALSE.equals(session.getActive())) {
             dto.setSessionId(session.getId());
             dto.setSessionName(session.getTitle());
-            // On force la présence à "Non renseigné"
             dto.setAttendanceStatus("Non renseigné");
-            dto.setIsJustified(false); // inutile d’avoir “oui/non” dans ce cas
-            // Le paiement peut être mis à zéro ou laissé tel quel si tu souhaites l’historique
+            dto.setIsJustified(false);
             dto.setPaymentStatus("Non payé");
             dto.setAmountPaid(0.0);
             return dto;
@@ -162,24 +160,30 @@ public class StudentHistoryService {
         dto.setSessionName(session.getTitle());
         dto.setSessionDate(session.getSessionTimeStart());
 
-        // Gérer l’attendance
+        // Récupérer l'attendance
         AttendanceEntity attendance = session.getAttendances().stream()
-                .filter(a -> a.getStudent().getId().equals(student.getId())).filter(AttendanceEntity::isActive)
+                .filter(a -> a.getStudent().getId().equals(student.getId()))
+                .filter(AttendanceEntity::isActive)
                 .findFirst()
                 .orElse(null);
 
         if (attendance != null) {
-            // Si l'attendance est "inactive", on force "Non renseigné"
-            if (Boolean.FALSE.equals(attendance.getActive())) {
+            if (!attendance.isActive()) {
+                // attendance inactive
                 dto.setAttendanceStatus("Non renseigné");
                 dto.setIsJustified(false);
             } else {
-                // Sinon, on applique la logique Présent / Absent
+                // Présent ou Absent
                 dto.setAttendanceStatus(Boolean.TRUE.equals(attendance.getIsPresent()) ? "Présent" : "Absent");
                 dto.setIsJustified(attendance.getIsJustified());
+
+                // catchUpSession => si attendance.isCatchUp = true
+                dto.setCatchUpSession(Boolean.TRUE.equals(attendance.getIsCatchUp()));
             }
         } else {
             dto.setAttendanceStatus("Non renseigné");
+            // Pas d'attendance => catchUpSession = false
+            dto.setCatchUpSession(false);
         }
 
         // Gérer le paiement
@@ -201,4 +205,18 @@ public class StudentHistoryService {
         return dto;
     }
 
+    // ===================== Helper methods ======================
+    private double calculateTotalPaidForSeries(SessionSeriesEntity series, StudentEntity student) {
+        return series.getSessions().stream()
+                .flatMap(session -> session.getPaymentDetails().stream())
+                .filter(pd -> pd.getPayment().getStudent().getId().equals(student.getId()))
+                .mapToDouble(PaymentDetailEntity::getAmountPaid)
+                .sum();
+    }
+
+    private double calculateTotalCostOfSeries(GroupEntity group) {
+        double pricePerSession = group.getPrice().getPrice();
+        int sessionNumberPerSerie = group.getSessionNumberPerSerie();
+        return pricePerSession * sessionNumberPerSerie;
+    }
 }

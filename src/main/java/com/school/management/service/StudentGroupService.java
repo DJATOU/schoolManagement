@@ -65,7 +65,7 @@ public class StudentGroupService {
 
         List<GroupEntity> alreadyAssociatedGroups = new ArrayList<>();
         groups.forEach(group -> {
-            boolean exists = studentGroupRepository.existsByStudentAndGroup(student, group);
+            boolean exists = studentGroupRepository.existsByStudentAndGroupAndActiveTrue(student, group);
             if (!exists) {
                 StudentGroupEntity studentGroup = StudentGroupEntity.builder()
                         .student(student)
@@ -132,7 +132,7 @@ public class StudentGroupService {
     // In `StudentGroupService.java`
     @Transactional
     public void removeStudentFromGroup(Long groupId, Long studentId) {
-        StudentGroupEntity studentGroup = studentGroupRepository.findByGroupIdAndStudentId(groupId, studentId)
+        StudentGroupEntity studentGroup = studentGroupRepository.findByGroupIdAndStudentIdAndActiveTrue(groupId, studentId)
                 .orElseThrow(() -> new EntityNotFoundException("StudentGroup not found for groupId " + groupId + " and studentId " + studentId));
         studentGroup.setActive(false);
         studentGroupRepository.save(studentGroup);
@@ -146,4 +146,19 @@ public class StudentGroupService {
                 .map(studentGroup -> groupMapper.groupToGroupDTO(studentGroup.getGroup()))
                 .toList();
     }
+
+    public List<StudentDTO> getStudentsForSession(Long groupId, Date sessionStartDate) {
+        List<StudentGroupEntity> studentGroups = studentGroupRepository
+                .findByGroupIdAndDateAssignedBefore(groupId, sessionStartDate);
+
+        return studentGroups.stream()
+                .map(sg -> StudentDTO.builder()
+                        .id(sg.getStudent().getId())
+                        .gender(sg.getStudent().getGender())
+                        .lastName(sg.getStudent().getLastName())
+                        .firstName(sg.getStudent().getFirstName())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
 }

@@ -17,5 +17,6 @@ public class SessionHistoryDTO {
     private String attendanceStatus;
     private Boolean isJustified;
     private String description;
-    private Date paymentDate; // Ajouter cette ligne
+    private Date paymentDate;
+    private Boolean catchUpSession;
 }
