@@ -1,5 +1,6 @@
 package com.school.management.service;
 
+import com.school.management.config.ImageUrlService;
 import com.school.management.dto.TeacherDTO;
 import com.school.management.mapper.TeacherMapper;
 import com.school.management.persistance.TeacherEntity;
@@ -19,8 +20,6 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,13 +31,16 @@ public class TeacherService {
     @PersistenceContext
     private EntityManager entityManager;
     private final TeacherRepository teacherRepository;
-    private final String BASE_PHOTO_URL = "http://localhost:8080/personne/";
+    private final TeacherMapper teacherMapper;
+    private final ImageUrlService imageUrlService;
 
-    private TeacherMapper teacherMapper;
     @Autowired
-    public TeacherService(TeacherRepository teacherRepository, TeacherMapper teacherMapper) {
+    public TeacherService(TeacherRepository teacherRepository,
+                         TeacherMapper teacherMapper,
+                         ImageUrlService imageUrlService) {
         this.teacherRepository = teacherRepository;
         this.teacherMapper = teacherMapper;
+        this.imageUrlService = imageUrlService;
     }
 
     @Transactional
@@ -81,12 +83,11 @@ public class TeacherService {
         return teacherEntities.stream()
                 .map(entity -> {
                     TeacherDTO dto = teacherMapper.teacherToTeacherDTO(entity);
-                    if (entity.getPhoto() != null && !entity.getPhoto().isEmpty()) {
-                        Path photoPath = Paths.get(entity.getPhoto());
-                        String photoName = photoPath.getFileName().toString();
-                        String photoUrl = BASE_PHOTO_URL + photoName;
-                        dto.setPhoto(photoUrl);
-                    }
+                    // Utiliser ImageUrlService pour générer l'URL de manière centralisée
+                    String photoUrl = imageUrlService.getTeacherPhotoUrl(
+                            imageUrlService.extractFilename(entity.getPhoto())
+                    );
+                    dto.setPhoto(photoUrl);
                     return dto;
                 })
                 .toList();

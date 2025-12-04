@@ -31,3 +31,15 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Application Specific ###
+# Variables d'environnement (contient des secrets)
+.env
+
+# Répertoire des images uploadées (peut être volumineux)
+uploads/
+/uploads/
+
+# Logs
+*.log
+logs/

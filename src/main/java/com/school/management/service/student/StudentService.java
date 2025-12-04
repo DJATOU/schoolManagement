@@ -1,5 +1,6 @@
 package com.school.management.service.student;
 
+import com.school.management.config.ImageUrlService;
 import com.school.management.dto.StudentDTO;
 import com.school.management.mapper.StudentMapper;
 import com.school.management.persistance.GroupEntity;
@@ -16,7 +17,6 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -34,12 +34,17 @@ public class StudentService {
     private final StudentRepository studentRepository;
     private final StudentMapper studentMapper;
     private final StudentSearchService studentSearchService;
+    private final ImageUrlService imageUrlService;
 
     @Autowired
-    public StudentService(StudentRepository studentRepository, StudentMapper studentMapper, StudentSearchService studentSearchService){
+    public StudentService(StudentRepository studentRepository,
+                         StudentMapper studentMapper,
+                         StudentSearchService studentSearchService,
+                         ImageUrlService imageUrlService){
         this.studentMapper = studentMapper;
         this.studentRepository = studentRepository;
         this.studentSearchService = studentSearchService;
+        this.imageUrlService = imageUrlService;
     }
 
     @Transactional(readOnly = true)
@@ -91,14 +96,11 @@ public class StudentService {
         return studentEntities.stream()
                 .map(entity -> {
                     StudentDTO dto = studentMapper.studentToStudentDTO(entity);
-                    if (entity.getPhoto() != null && !entity.getPhoto().isEmpty()) {
-                        String fileName = Paths.get(entity.getPhoto()).getFileName().toString();
-                        String photoUrl = "http://localhost:8080/api/students/photos/" + fileName;
-                        dto.setPhoto(photoUrl);
-                    } else {
-                        // Optionnel : définir une image par défaut
-                        dto.setPhoto("assets/default-avatar.png");
-                    }
+                    // Utiliser ImageUrlService pour générer l'URL de manière centralisée
+                    String photoUrl = imageUrlService.getStudentPhotoUrl(
+                            imageUrlService.extractFilename(entity.getPhoto())
+                    );
+                    dto.setPhoto(photoUrl);
                     return dto;
                 })
                 .toList();
