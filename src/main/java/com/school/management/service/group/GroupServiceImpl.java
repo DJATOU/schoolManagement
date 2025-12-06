@@ -9,11 +9,10 @@ import com.school.management.persistance.AttendanceEntity;
 import com.school.management.persistance.GroupEntity;
 import com.school.management.persistance.StudentEntity;
 import com.school.management.persistance.StudentGroupEntity;
-import com.school.management.repository.AttendanceRepository;
-import com.school.management.repository.GroupRepository;
-import com.school.management.repository.StudentGroupRepository;
+import com.school.management.repository.*;
 import com.school.management.service.exception.CustomServiceException;
 import com.school.management.service.interfaces.GroupService;
+import com.school.management.shared.mapper.MappingContext;
 import io.swagger.v3.core.util.ReflectionUtils;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
@@ -23,6 +22,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.annotation.PostConstruct;
 import java.lang.reflect.Field;
 import java.util.*;
 
@@ -36,15 +36,31 @@ public class GroupServiceImpl implements GroupService {
     private final ModelMapper modelMapper;
     private final GroupSearchService groupSearchService;
     private final AttendanceRepository attendanceRepository;
-
     private final StudentGroupRepository studentGroupRepository;
+
+    // PHASE 1 REFACTORING: Repositories pour MappingContext
+    private final GroupTypeRepository groupTypeRepository;
+    private final LevelRepository levelRepository;
+    private final SubjectRepository subjectRepository;
+    private final PricingRepository pricingRepository;
+    private final TeacherRepository teacherRepository;
+
+    // MappingContext pour GroupMapper
+    private MappingContext mappingContext;
 
     @Autowired
     public GroupServiceImpl(GroupRepository groupRepository,
                             GroupMapper groupMapper,
                             StudentMapper studentMapper,
                             ModelMapper modelMapper,
-                            GroupSearchService groupSearchService, StudentGroupRepository studentGroupRepository, AttendanceRepository attendanceRepository) {
+                            GroupSearchService groupSearchService,
+                            StudentGroupRepository studentGroupRepository,
+                            AttendanceRepository attendanceRepository,
+                            GroupTypeRepository groupTypeRepository,
+                            LevelRepository levelRepository,
+                            SubjectRepository subjectRepository,
+                            PricingRepository pricingRepository,
+                            TeacherRepository teacherRepository) {
         this.groupRepository = groupRepository;
         this.groupMapper = groupMapper;
         this.studentMapper = studentMapper;
@@ -52,6 +68,33 @@ public class GroupServiceImpl implements GroupService {
         this.groupSearchService = groupSearchService;
         this.studentGroupRepository = studentGroupRepository;
         this.attendanceRepository = attendanceRepository;
+        this.groupTypeRepository = groupTypeRepository;
+        this.levelRepository = levelRepository;
+        this.subjectRepository = subjectRepository;
+        this.pricingRepository = pricingRepository;
+        this.teacherRepository = teacherRepository;
+    }
+
+    /**
+     * PHASE 1 REFACTORING: Initialise le MappingContext après injection des dépendances
+     */
+    @PostConstruct
+    private void initMappingContext() {
+        this.mappingContext = MappingContext.forGroup(
+            groupTypeRepository,
+            levelRepository,
+            subjectRepository,
+            pricingRepository,
+            teacherRepository
+        );
+        LOGGER.debug("MappingContext initialized for GroupService");
+    }
+
+    /**
+     * Retourne le MappingContext pour utilisation par les controllers
+     */
+    public MappingContext getMappingContext() {
+        return mappingContext;
     }
 
     public List<GroupEntity> findByTeacherId(Long teacherId) {

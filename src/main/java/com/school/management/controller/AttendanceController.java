@@ -50,7 +50,8 @@ public class AttendanceController {
 
     @PostMapping
     public ResponseEntity<AttendanceDTO> createAttendance(@RequestBody AttendanceDTO attendanceDto) {
-        AttendanceEntity attendance = attendanceMapper.attendanceDTOToAttendance(attendanceDto);
+        // PHASE 1 REFACTORING: Utilise MappingContext au lieu de ApplicationContextProvider
+        AttendanceEntity attendance = attendanceMapper.attendanceDTOToAttendance(attendanceDto, attendanceService.getMappingContext());
         AttendanceEntity savedAttendance = attendanceService.createAttendance(attendance);
         return new ResponseEntity<>(attendanceMapper.attendanceToAttendanceDTO(savedAttendance), HttpStatus.CREATED);
     }
@@ -77,8 +78,9 @@ public class AttendanceController {
 
     @PostMapping("/bulk")
     public ResponseEntity<List<AttendanceDTO>> submitAttendance(@RequestBody List<AttendanceDTO> attendanceDTOs) {
+        // PHASE 1 REFACTORING: Utilise MappingContext au lieu de ApplicationContextProvider
         List<AttendanceEntity> attendanceEntities = attendanceDTOs.stream()
-                .map(attendanceMapper::attendanceDTOToAttendance)
+                .map(dto -> attendanceMapper.attendanceDTOToAttendance(dto, attendanceService.getMappingContext()))
                 .toList();
 
         List<AttendanceEntity> savedAttendances = attendanceService.saveAll(attendanceEntities);

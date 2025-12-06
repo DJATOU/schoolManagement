@@ -5,8 +5,12 @@ import com.school.management.dto.StudentDTO;
 import com.school.management.mapper.StudentMapper;
 import com.school.management.persistance.GroupEntity;
 import com.school.management.persistance.StudentEntity;
+import com.school.management.repository.LevelRepository;
 import com.school.management.repository.StudentRepository;
+import com.school.management.repository.TutorRepository;
 import com.school.management.service.exception.CustomServiceException;
+import com.school.management.shared.mapper.MappingContext;
+import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.criteria.*;
@@ -23,28 +27,68 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+/**
+ * Service métier pour la gestion des étudiants.
+ *
+ * REFACTORÉ Phase 1 : Utilise maintenant MappingContext au lieu de ApplicationContextProvider
+ * pour résoudre les dépendances lors du mapping DTO → Entity.
+ *
+ * @author Claude Code
+ * @since Phase 1 Refactoring
+ */
 @Service
 public class StudentService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StudentService.class);
     private static final String LASTNAME = "lastName";
     private static final String FIRSTNAME = "firstName";
+
     @PersistenceContext
     private EntityManager entityManager;
+
     private final StudentRepository studentRepository;
     private final StudentMapper studentMapper;
     private final StudentSearchService studentSearchService;
     private final ImageUrlService imageUrlService;
 
+    // Repositories nécessaires pour le MappingContext
+    private final LevelRepository levelRepository;
+    private final TutorRepository tutorRepository;
+
+    // MappingContext réutilisable (créé une seule fois)
+    private MappingContext mappingContext;
+
     @Autowired
     public StudentService(StudentRepository studentRepository,
                          StudentMapper studentMapper,
                          StudentSearchService studentSearchService,
-                         ImageUrlService imageUrlService){
+                         ImageUrlService imageUrlService,
+                         LevelRepository levelRepository,
+                         TutorRepository tutorRepository) {
         this.studentMapper = studentMapper;
         this.studentRepository = studentRepository;
         this.studentSearchService = studentSearchService;
         this.imageUrlService = imageUrlService;
+        this.levelRepository = levelRepository;
+        this.tutorRepository = tutorRepository;
+    }
+
+    /**
+     * Initialise le MappingContext après l'injection des dépendances.
+     * Permet de le réutiliser dans toutes les méthodes de mapping.
+     */
+    @PostConstruct
+    private void initMappingContext() {
+        this.mappingContext = MappingContext.forStudent(levelRepository, tutorRepository);
+        LOGGER.debug("MappingContext initialized for StudentService");
+    }
+
+    /**
+     * Retourne le MappingContext pour utilisation dans les controllers si nécessaire.
+     * @return le contexte de mapping configuré
+     */
+    public MappingContext getMappingContext() {
+        return mappingContext;
     }
 
     @Transactional(readOnly = true)

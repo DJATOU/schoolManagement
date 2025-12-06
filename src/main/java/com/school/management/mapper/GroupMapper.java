@@ -2,8 +2,8 @@ package com.school.management.mapper;
 
 import com.school.management.dto.GroupDTO;
 import com.school.management.persistance.*;
-import com.school.management.repository.*;
-import com.school.management.service.exception.CustomServiceException;
+import com.school.management.shared.exception.ResourceNotFoundException;
+import com.school.management.shared.mapper.MappingContext;
 import org.mapstruct.*;
 
 @Mapper(componentModel = "spring",  builder = @Builder())
@@ -26,52 +26,47 @@ public interface GroupMapper {
     @Mapping(source = "subjectId", target = "subject", qualifiedByName = "idToSubject")
     @Mapping(source = "priceId", target = "price", qualifiedByName = "idToPricing")
     @Mapping(source = "teacherId", target = "teacher", qualifiedByName = "idToTeacher")
-    GroupEntity groupDTOToGroup(GroupDTO groupDto);
+    GroupEntity groupDTOToGroup(GroupDTO groupDto, @Context MappingContext context);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    void updateGroupFromDto(GroupDTO dto, @MappingTarget GroupEntity entity);
+    void updateGroupFromDto(GroupDTO dto, @MappingTarget GroupEntity entity, @Context MappingContext context);
 
     @Named("idToGroupType")
-    default GroupTypeEntity idToGroupType(Long id) {
+    default GroupTypeEntity idToGroupType(Long id, @Context MappingContext context) {
         if (id == null) {
             return null;
         }
-        GroupTypeRepository groupTypeRepository = ApplicationContextProvider.getBean(GroupTypeRepository.class);
-        return groupTypeRepository.findById(id)
-                .orElseThrow(() -> new CustomServiceException("GroupType not found with id: " + id));
+        return context.getGroupTypeRepository().findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("GroupType", id));
     }
 
 
     @Named("idToLevel")
-    default LevelEntity idToLevel(Long id) {
+    default LevelEntity idToLevel(Long id, @Context MappingContext context) {
         if (id == null) return null;
-        LevelRepository levelRepository = ApplicationContextProvider.getBean(LevelRepository.class);
-        return levelRepository.findById(id).orElseThrow(() ->
-                new CustomServiceException("Level not found with id: " + id));
+        return context.getLevelRepository().findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Level", id));
     }
 
     @Named("idToSubject")
-    default SubjectEntity idToSubject(Long id) {
+    default SubjectEntity idToSubject(Long id, @Context MappingContext context) {
         if (id == null) return null;
-        SubjectRepository subjectRepository = ApplicationContextProvider.getBean(SubjectRepository.class);
-        return subjectRepository.findById(id).orElseThrow(() ->
-                new CustomServiceException("Subject not found with id: " + id));
+        return context.getSubjectRepository().findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Subject", id));
     }
 
     @Named("idToPricing")
-    default PricingEntity idToPricing(Long id) {
+    default PricingEntity idToPricing(Long id, @Context MappingContext context) {
         if (id == null) return null;
-        PricingRepository pricingRepository = ApplicationContextProvider.getBean(PricingRepository.class);
-        return pricingRepository.findById(id).orElseThrow(() ->
-                new CustomServiceException("Pricing not found with id: " + id));
+        return context.getPricingRepository().findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Pricing", id));
     }
 
     @Named("idToTeacher")
-    default TeacherEntity idToTeacher(Long id) {
+    default TeacherEntity idToTeacher(Long id, @Context MappingContext context) {
         if (id == null) return null;
-        TeacherRepository teacherRepository = ApplicationContextProvider.getBean(TeacherRepository.class);
-        return teacherRepository.findById(id).orElseThrow(() ->
-                new CustomServiceException("Teacher not found with id: " + id));
+        return context.getTeacherRepository().findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Teacher", id));
     }
 
 }

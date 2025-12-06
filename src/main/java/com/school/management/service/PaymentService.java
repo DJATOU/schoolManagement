@@ -5,6 +5,8 @@ import com.school.management.dto.PaymentDetailDTO;
 import com.school.management.persistance.*;
 import com.school.management.repository.*;
 import com.school.management.service.exception.CustomServiceException;
+import com.school.management.shared.mapper.MappingContext;
+import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -32,6 +34,9 @@ public class PaymentService {
     private final AttendanceRepository attendanceRepository;
     private final SessionSeriesRepository sessionSeriesRepository;
 
+    // PHASE 1 REFACTORING: MappingContext pour PaymentMapper
+    private MappingContext mappingContext;
+
     public PaymentService(
             PaymentRepository paymentRepository,
             StudentRepository studentRepository,
@@ -50,6 +55,34 @@ public class PaymentService {
         this.sessionSeriesRepository = sessionSeriesRepository;
     }
 
+    /**
+     * PHASE 1 REFACTORING: Initialise le MappingContext après injection des dépendances
+     */
+    @PostConstruct
+    private void initMappingContext() {
+        this.mappingContext = MappingContext.of(
+                null, // LevelRepository
+                null, // TutorRepository
+                null, // GroupTypeRepository
+                null, // SubjectRepository
+                null, // PricingRepository
+                null, // TeacherRepository
+                null, // RoomRepository
+                groupRepository,
+                sessionSeriesRepository,
+                studentRepository,
+                sessionRepository
+        );
+        LOGGER.debug("MappingContext initialized for PaymentService");
+    }
+
+    /**
+     * Retourne le MappingContext pour utilisation par les controllers
+     */
+    public MappingContext getMappingContext() {
+        return mappingContext;
+    }
+
     // --------------------------
     // Basic Payment CRUD methods
     // --------------------------
@@ -63,23 +96,40 @@ public class PaymentService {
                 .orElseThrow(() -> new RuntimeException("Payment not found with ID: " + id));
     }
 
+    /**
+     * Crée un nouveau paiement.
+     * PHASE 1 REFACTORING: Ajout de @Transactional pour garantir l'atomicité.
+     */
+    @Transactional
     public PaymentEntity createPayment(PaymentEntity payment) {
         return paymentRepository.save(payment);
     }
 
     /**
-     * Example update method if you want to do a full update on existing Payment.
+     * Met à jour un paiement existant.
+     * PHASE 1 REFACTORING: Ajout de @Transactional pour garantir l'atomicité.
      */
+    @Transactional
     public PaymentEntity updatePayment(Long id) {
         PaymentEntity existingPayment = getPaymentById(id);
         // Update relevant fields from an input (not shown)...
         return paymentRepository.save(existingPayment);
     }
 
+    /**
+     * Récupère tous les paiements d'un étudiant.
+     * Lecture seule - pas besoin de @Transactional de modification.
+     */
+    @Transactional(readOnly = true)
     public List<PaymentEntity> getAllPaymentsForStudent(Long studentId) {
         return paymentRepository.findAllByStudentIdOrderByPaymentDateDesc(studentId);
     }
 
+    /**
+     * Sauvegarde ou met à jour un paiement.
+     * PHASE 1 REFACTORING: Ajout de @Transactional pour garantir l'atomicité.
+     */
+    @Transactional
     public PaymentEntity save(PaymentEntity payment) {
         return paymentRepository.save(payment);
     }

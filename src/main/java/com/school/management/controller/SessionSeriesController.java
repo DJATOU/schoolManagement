@@ -54,7 +54,8 @@ public class SessionSeriesController {
             Date startDate = sessionSeriesDto.getSerieTimeStart() != null ? sessionSeriesDto.getSerieTimeStart() : new Date();
             sessionSeriesDto.setSerieTimeEnd(new Date(startDate.getTime() + 30L * 24 * 60 * 60 * 1000)); // Un mois plus tard
         }
-        SessionSeriesEntity sessionSeriesEntity = sessionSeriesMapper.toEntity(sessionSeriesDto);
+        // PHASE 1 REFACTORING: Utilise MappingContext au lieu de ApplicationContextProvider
+        SessionSeriesEntity sessionSeriesEntity = sessionSeriesMapper.toEntity(sessionSeriesDto, sessionSeriesService.getMappingContext());
         SessionSeriesEntity createdSessionSeries = sessionSeriesService.createOrUpdateSessionSeries(sessionSeriesEntity);
         SessionSeriesDto createdSessionSeriesDto = sessionSeriesMapper.toDto(createdSessionSeries);
         return ResponseEntity.ok(createdSessionSeriesDto);

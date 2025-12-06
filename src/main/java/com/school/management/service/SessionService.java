@@ -7,14 +7,15 @@ import com.school.management.persistance.GroupEntity;
 import com.school.management.persistance.RoomEntity;
 import com.school.management.persistance.SessionEntity;
 import com.school.management.persistance.TeacherEntity;
-import com.school.management.repository.GroupRepository;
-import com.school.management.repository.RoomRepository;
-import com.school.management.repository.SessionRepository;
-import com.school.management.repository.TeacherRepository;
+import com.school.management.repository.*;
 import com.school.management.service.exception.CustomServiceException;
 import com.school.management.service.util.CommonSpecifications;
+import com.school.management.shared.mapper.MappingContext;
+import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -29,28 +30,58 @@ import java.util.function.Consumer;
 @Service
 public class SessionService {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(SessionService.class);
     private static final String SESSION_NOT_FOUND_MESSAGE = "Session not found with id: ";
     private static final String GROUPID = "groupId";
     private static final String ROOMID = "roomId";
     private static final String TEACHERID = "teacherId";
+
     private final SessionRepository sessionRepository;
-
     private final RoomRepository roomRepository;
-
     private final TeacherRepository teacherRepository;
     private final GroupRepository groupRepository;
+    private final SessionSeriesRepository sessionSeriesRepository;
     private final PatchService patchService;
     private final SessionMapper sessionMapper;
 
+    // MappingContext pour SessionMapper
+    private MappingContext mappingContext;
+
     @Autowired
     public SessionService(SessionRepository sessionRepository, PatchService patchService, GroupRepository groupRepository,
-                          SessionMapper sessionMapper, RoomRepository roomRepository, TeacherRepository teacherRepository) {
+                          SessionMapper sessionMapper, RoomRepository roomRepository, TeacherRepository teacherRepository,
+                          SessionSeriesRepository sessionSeriesRepository) {
         this.sessionRepository = sessionRepository;
         this.patchService = patchService;
         this.groupRepository = groupRepository;
         this.sessionMapper = sessionMapper;
         this.roomRepository = roomRepository;
         this.teacherRepository = teacherRepository;
+        this.sessionSeriesRepository = sessionSeriesRepository;
+    }
+
+    /**
+     * PHASE 1 REFACTORING: Initialise le MappingContext après injection des dépendances
+     */
+    @PostConstruct
+    private void initMappingContext() {
+        this.mappingContext = MappingContext.of(
+                null, null, null, null, null,
+                teacherRepository,
+                roomRepository,
+                groupRepository,
+                sessionSeriesRepository,
+                null,
+                sessionRepository
+        );
+        LOGGER.debug("MappingContext initialized for SessionService");
+    }
+
+    /**
+     * Retourne le MappingContext pour utilisation par les controllers
+     */
+    public MappingContext getMappingContext() {
+        return mappingContext;
     }
 
     public List<SessionEntity> getAllSessions() {

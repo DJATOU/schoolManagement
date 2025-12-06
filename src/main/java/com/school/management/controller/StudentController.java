@@ -7,10 +7,10 @@ import com.school.management.mapper.GroupMapper;
 import com.school.management.mapper.StudentMapper;
 import com.school.management.persistance.StudentEntity;
 import com.school.management.persistance.TutorEntity;
+import com.school.management.infrastructure.storage.FileManagementService;
 import com.school.management.service.exception.CustomServiceException;
 import com.school.management.service.student.StudentHistoryService;
 import com.school.management.service.student.StudentService;
-import com.school.management.util.FileValidationUtil;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,14 +25,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.net.MalformedURLException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -47,65 +43,45 @@ public class StudentController {
     private String uploadDir;
     private final StudentMapper studentMapper;
     private final GroupMapper groupMapper;
-
     private final StudentHistoryService studentHistoryService;
+    private final FileManagementService fileManagementService;
 
     @Autowired
-    public StudentController(StudentService studentService, StudentMapper studentMapper, GroupMapper groupMapper, StudentHistoryService studentHistoryService) {
+    public StudentController(StudentService studentService, StudentMapper studentMapper, GroupMapper groupMapper,
+                           StudentHistoryService studentHistoryService, FileManagementService fileManagementService) {
         this.studentService = studentService;
         this.studentMapper = studentMapper;
         this.groupMapper = groupMapper;
         this.studentHistoryService = studentHistoryService;
+        this.fileManagementService = fileManagementService;
     }
 
 
     @PostMapping("/createStudent")
     public ResponseEntity<Object> createStudent(@Valid @ModelAttribute StudentDTO studentDto,
                                            @RequestParam("file") MultipartFile file) {
-        // Validation complète du fichier (type, taille, sécurité)
-        try {
-            FileValidationUtil.validateImageFile(file);
-        } catch (IllegalArgumentException e) {
-            LOGGER.warn("File validation failed: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(e.getMessage());
+        // PHASE 1 REFACTORING: Utilise FileManagementService au lieu de gérer les fichiers directement
+        // Upload du fichier avec rollback automatique en cas d'erreur
+        FileManagementService.FileUploadResult uploadResult = fileManagementService.uploadWithRollback(file);
+
+        if (!uploadResult.isSuccess()) {
+            LOGGER.warn("File upload failed: {}", uploadResult.getErrorMessage());
+            return ResponseEntity.badRequest().body(uploadResult.getErrorMessage());
         }
 
-        // Générer un nom unique et sécurisé pour l'image
-        String fileName = FileValidationUtil.generateSafeFilename(file.getOriginalFilename());
-        Path filePath = null;
-
         try {
-            // Sauvegarder l'image sur le disque
-            Path uploadPath = Paths.get(uploadDir);
-            if (!Files.exists(uploadPath)) {
-                Files.createDirectories(uploadPath);
-            }
-            filePath = uploadPath.resolve(fileName);
-            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+            // Stocker le nom du fichier dans le DTO
+            studentDto.setPhoto(uploadResult.getFilename());
 
-            // Stocker uniquement le nom de l'image dans la base de données
-            studentDto.setPhoto(fileName);
-
-            // Sauvegarder l'étudiant en base de données
-            StudentEntity student = studentMapper.studentDTOToStudent(studentDto);
+            // Sauvegarder l'étudiant en base de données avec MappingContext
+            StudentEntity student = studentMapper.studentDTOToStudent(studentDto, studentService.getMappingContext());
             StudentEntity savedStudent = studentService.save(student);
-            LOGGER.info("Student created successfully with photo: {}", fileName);
+
+            LOGGER.info("Student created successfully with photo: {}", uploadResult.getFilename());
             return ResponseEntity.ok(studentMapper.studentToStudentDTO(savedStudent));
 
-        } catch (IOException e) {
-            LOGGER.error("Could not save file: {}", fileName, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Could not save file: " + fileName);
         } catch (Exception e) {
-            // Nettoyer le fichier si la sauvegarde en base a échoué
-            if (filePath != null && Files.exists(filePath)) {
-                try {
-                    Files.delete(filePath);
-                    LOGGER.info("Deleted orphan file after DB save failure: {}", fileName);
-                } catch (IOException deleteEx) {
-                    LOGGER.error("Failed to delete orphan file: {}", fileName, deleteEx);
-                }
-            }
+            // Le fichier sera automatiquement nettoyé par FileManagementService
             LOGGER.error("Could not save student", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Could not save student: " + e.getMessage());

@@ -1,11 +1,11 @@
 package com.school.management.controller;
 
 import com.school.management.dto.TeacherDTO;
+import com.school.management.infrastructure.storage.FileManagementService;
 import com.school.management.mapper.TeacherMapper;
 import com.school.management.persistance.TeacherEntity;
 import com.school.management.service.TeacherService;
 import com.school.management.service.exception.CustomServiceException;
-import com.school.management.util.FileValidationUtil;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,11 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.List;
 
 @RestController
@@ -34,11 +29,14 @@ public class TeacherController {
     private String uploadDir;
     private final TeacherService teacherService;
     private final TeacherMapper teacherMapper;
+    private final FileManagementService fileManagementService;
 
     @Autowired
-    public TeacherController(TeacherService teacherService, TeacherMapper teacherMapper) {
+    public TeacherController(TeacherService teacherService, TeacherMapper teacherMapper,
+                           FileManagementService fileManagementService) {
         this.teacherService = teacherService;
         this.teacherMapper = teacherMapper;
+        this.fileManagementService = fileManagementService;
     }
 
     @Transactional(readOnly = true)
@@ -76,50 +74,28 @@ public class TeacherController {
     @PostMapping("/createTeacher")
     public ResponseEntity<?> createTeacher(@Valid @ModelAttribute TeacherDTO teacherDto,
                                            @RequestParam("file") MultipartFile file) {
-        // Validation complète du fichier (type, taille, sécurité)
-        try {
-            FileValidationUtil.validateImageFile(file);
-        } catch (IllegalArgumentException e) {
-            LOGGER.warn("File validation failed: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(e.getMessage());
+        // PHASE 1 REFACTORING: Utilise FileManagementService au lieu de gérer les fichiers directement
+        // Upload du fichier avec rollback automatique en cas d'erreur
+        FileManagementService.FileUploadResult uploadResult = fileManagementService.uploadWithRollback(file);
+
+        if (!uploadResult.isSuccess()) {
+            LOGGER.warn("File upload failed: {}", uploadResult.getErrorMessage());
+            return ResponseEntity.badRequest().body(uploadResult.getErrorMessage());
         }
 
-        // Générer un nom unique et sécurisé pour l'image
-        String fileName = FileValidationUtil.generateSafeFilename(file.getOriginalFilename());
-        Path filePath = null;
-
         try {
-            Path uploadPath = Paths.get(uploadDir);
-            if (!Files.exists(uploadPath)) {
-                Files.createDirectories(uploadPath);
-            }
-            filePath = uploadPath.resolve(fileName);
-            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-            // IMPORTANT: Stocker UNIQUEMENT le nom du fichier (pas le chemin complet)
-            // Cela unifie le comportement avec StudentController
-            teacherDto.setPhoto(fileName);
+            // Stocker le nom du fichier dans le DTO
+            teacherDto.setPhoto(uploadResult.getFilename());
 
             // Sauvegarder le professeur en base de données
             TeacherEntity teacher = teacherMapper.teacherDTOToTeacher(teacherDto);
             TeacherEntity savedTeacher = teacherService.save(teacher);
-            LOGGER.info("Teacher created successfully with photo: {}", fileName);
+
+            LOGGER.info("Teacher created successfully with photo: {}", uploadResult.getFilename());
             return ResponseEntity.ok(teacherMapper.teacherToTeacherDTO(savedTeacher));
 
-        } catch (IOException e) {
-            LOGGER.error("Could not save file: {}", fileName, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Could not save file: " + fileName);
         } catch (Exception e) {
-            // Nettoyer le fichier si la sauvegarde en base a échoué
-            if (filePath != null && Files.exists(filePath)) {
-                try {
-                    Files.delete(filePath);
-                    LOGGER.info("Deleted orphan file after DB save failure: {}", fileName);
-                } catch (IOException deleteEx) {
-                    LOGGER.error("Failed to delete orphan file: {}", fileName, deleteEx);
-                }
-            }
+            // Le fichier sera automatiquement nettoyé par FileManagementService
             LOGGER.error("Could not save teacher", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Could not save teacher: " + e.getMessage());

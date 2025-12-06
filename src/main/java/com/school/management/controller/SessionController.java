@@ -68,8 +68,9 @@ public class SessionController {
     public ResponseEntity<SessionDTO> createSession(@Valid @RequestBody SessionDTO sessionDTO) {
         logger.info("Received request to create session: {}", sessionDTO);
 
+        // PHASE 1 REFACTORING: Utilise MappingContext au lieu de ApplicationContextProvider
         // Convert DTO to entity
-        SessionEntity sessionEntity = sessionMapper.sessionDtoToSessionEntity(sessionDTO);
+        SessionEntity sessionEntity = sessionMapper.sessionDtoToSessionEntity(sessionDTO, sessionService.getMappingContext());
         logger.debug("Mapped SessionDTO to SessionEntity: {}", sessionEntity);
 
         // Create session in the database

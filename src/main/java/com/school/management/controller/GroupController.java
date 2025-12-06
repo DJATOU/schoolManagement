@@ -41,7 +41,8 @@ public class GroupController {
 
     @PostMapping("/createGroupe")
     public ResponseEntity<GroupDTO> createGroup(@Valid @ModelAttribute GroupDTO groupDto) {
-        GroupEntity group = groupMapper.groupDTOToGroup(groupDto);
+        // PHASE 1 REFACTORING: Utilise MappingContext au lieu de ApplicationContextProvider
+        GroupEntity group = groupMapper.groupDTOToGroup(groupDto, groupService.getMappingContext());
         GroupEntity savedGroup = groupService.save(group);
         return new ResponseEntity<>(groupMapper.groupToGroupDTO(savedGroup), HttpStatus.CREATED);
     }
@@ -70,7 +71,8 @@ public class GroupController {
 
     @PutMapping("/{id}")
     public ResponseEntity<GroupDTO> updateGroup(@PathVariable Long id, @RequestBody GroupDTO groupDto) {
-        GroupEntity updatedGroup = groupMapper.groupDTOToGroup(groupDto);
+        // PHASE 1 REFACTORING: Utilise MappingContext au lieu de ApplicationContextProvider
+        GroupEntity updatedGroup = groupMapper.groupDTOToGroup(groupDto, groupService.getMappingContext());
         updatedGroup.setId(id);
         GroupEntity savedGroup = groupService.save(updatedGroup);
         return ResponseEntity.ok(groupMapper.groupToGroupDTO(savedGroup));

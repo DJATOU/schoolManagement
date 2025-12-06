@@ -2,15 +2,9 @@ package com.school.management.mapper;
 
 import com.school.management.dto.AttendanceDTO;
 import com.school.management.persistance.*;
-import com.school.management.repository.GroupRepository;
-import com.school.management.repository.SessionRepository;
-import com.school.management.repository.SessionSeriesRepository;
-import com.school.management.repository.StudentRepository;
-import com.school.management.service.exception.CustomServiceException;
-import org.mapstruct.Builder;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.Named;
+import com.school.management.shared.exception.ResourceNotFoundException;
+import com.school.management.shared.mapper.MappingContext;
+import org.mapstruct.*;
 
 @Mapper(componentModel = "spring", builder = @Builder(disableBuilder = false))
 public interface AttendanceMapper {
@@ -25,39 +19,33 @@ public interface AttendanceMapper {
     @Mapping(source = "sessionId", target = "session", qualifiedByName = "idToSession")
     @Mapping(source = "sessionSeriesId", target = "sessionSeries", qualifiedByName = "idToSessionSeries")
     @Mapping(source = "groupId", target = "group", qualifiedByName = "idToGroup")
-    AttendanceEntity attendanceDTOToAttendance(AttendanceDTO attendanceDTO);
+    AttendanceEntity attendanceDTOToAttendance(AttendanceDTO attendanceDTO, @Context MappingContext context);
 
     @Named("idToStudent")
-    default StudentEntity idToStudent(Long id) {
-        if (id == null) return null ;
-        StudentRepository studentRepository = ApplicationContextProvider.getBean(StudentRepository.class);
-         return studentRepository.findById(id).orElseThrow(() ->
-                new CustomServiceException("Student not found with id: " + id));
-
+    default StudentEntity idToStudent(Long id, @Context MappingContext context) {
+        if (id == null) return null;
+        return context.getStudentRepository().findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Student", id));
     }
 
     @Named("idToSession")
-    default SessionEntity idToSession(Long id) {
+    default SessionEntity idToSession(Long id, @Context MappingContext context) {
         if (id == null) return null;
-        SessionRepository sessionRepository = ApplicationContextProvider.getBean(SessionRepository.class);
-        return sessionRepository.findById(id).orElseThrow(() ->
-                new CustomServiceException("Session not found with id: " + id));
-
+        return context.getSessionRepository().findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Session", id));
     }
 
     @Named("idToSessionSeries")
-    default SessionSeriesEntity idToSessionSeries(Long id) {
+    default SessionSeriesEntity idToSessionSeries(Long id, @Context MappingContext context) {
         if (id == null) return null;
-        SessionSeriesRepository sessionSeriesRepository = ApplicationContextProvider.getBean(SessionSeriesRepository.class);
-        return sessionSeriesRepository.findById(id).orElseThrow(() ->
-                new CustomServiceException("SessionSeries not found with id: " + id));
+        return context.getSessionSeriesRepository().findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("SessionSeries", id));
     }
 
     @Named("idToGroup")
-    default GroupEntity idToGroup(Long id) {
+    default GroupEntity idToGroup(Long id, @Context MappingContext context) {
         if (id == null) return null;
-        GroupRepository groupRepository = ApplicationContextProvider.getBean(GroupRepository.class);
-        return groupRepository.findById(id).orElseThrow(() ->
-                new CustomServiceException("Group not found with id: " + id));
+        return context.getGroupRepository().findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Group", id));
     }
 }

@@ -6,11 +6,8 @@ import com.school.management.persistance.RoomEntity;
 import com.school.management.persistance.SessionEntity;
 import com.school.management.persistance.TeacherEntity;
 import com.school.management.persistance.SessionSeriesEntity;
-import com.school.management.repository.GroupRepository;
-import com.school.management.repository.RoomRepository;
-import com.school.management.repository.TeacherRepository;
-import com.school.management.repository.SessionSeriesRepository;
-import com.school.management.service.exception.CustomServiceException;
+import com.school.management.shared.exception.ResourceNotFoundException;
+import com.school.management.shared.mapper.MappingContext;
 import org.mapstruct.*;
 
 @Mapper(componentModel = "spring", builder = @Builder(disableBuilder = false))
@@ -30,40 +27,44 @@ public interface SessionMapper {
     @Mapping(source = "groupId", target = "group", qualifiedByName = "idToGroup")
     @Mapping(source = "teacherId", target = "teacher", qualifiedByName = "idToTeacher")
     @Mapping(source = "roomId", target = "room", qualifiedByName = "idToRoom")
-    @Mapping(source = "sessionSeriesId", target = "sessionSeries", qualifiedByName = "idToSeries") // Correction ici
+    @Mapping(source = "sessionSeriesId", target = "sessionSeries", qualifiedByName = "idToSeries")
     @Mapping(source = "isFinished", target = "isFinished")
-    SessionEntity sessionDtoToSessionEntity(SessionDTO dto);
+    @Mapping(target = "dateCreation", ignore = true)
+    @Mapping(target = "dateUpdate", ignore = true)
+    @Mapping(target = "createdBy", ignore = true)
+    @Mapping(target = "updatedBy", ignore = true)
+    @Mapping(target = "active", ignore = true)
+    @Mapping(target = "description", ignore = true)
+    @Mapping(target = "paymentDetails", ignore = true)
+    @Mapping(target = "attendances", ignore = true)
+    SessionEntity sessionDtoToSessionEntity(SessionDTO dto, @Context MappingContext context);
 
     @Named("idToGroup")
-    default GroupEntity idToGroup(Long id) {
+    default GroupEntity idToGroup(Long id, @Context MappingContext context) {
         if (id == null) return null;
-        GroupRepository groupRepository = ApplicationContextProvider.getBean(GroupRepository.class);
-        return groupRepository.findById(id)
-                .orElseThrow(() -> new CustomServiceException("Group not found for ID: " + id));
+        return context.getGroupRepository().findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Group", id));
     }
 
     @Named("idToTeacher")
-    default TeacherEntity idToTeacher(Long id) {
+    default TeacherEntity idToTeacher(Long id, @Context MappingContext context) {
         if (id == null) return null;
-        TeacherRepository teacherRepository = ApplicationContextProvider.getBean(TeacherRepository.class);
-        return teacherRepository.findById(id)
-                .orElseThrow(() -> new CustomServiceException("Teacher not found for ID: " + id));
+        return context.getTeacherRepository().findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Teacher", id));
     }
 
     @Named("idToRoom")
-    default RoomEntity idToRoom(Long id) {
+    default RoomEntity idToRoom(Long id, @Context MappingContext context) {
         if (id == null) return null;
-        RoomRepository roomRepository = ApplicationContextProvider.getBean(RoomRepository.class);
-        return roomRepository.findById(id)
-                .orElseThrow(() -> new CustomServiceException("Room not found for ID: " + id));
+        return context.getRoomRepository().findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Room", id));
     }
 
     @Named("idToSeries")
-    default SessionSeriesEntity idToSeries(Long id) {
+    default SessionSeriesEntity idToSeries(Long id, @Context MappingContext context) {
         if (id == null) return null;
-        SessionSeriesRepository seriesRepository = ApplicationContextProvider.getBean(SessionSeriesRepository.class);
-        return seriesRepository.findById(id)
-                .orElseThrow(() -> new CustomServiceException("Series not found for ID: " + id));
+        return context.getSessionSeriesRepository().findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("SessionSeries", id));
     }
 
     @Named("formatTeacherName")
