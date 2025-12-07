@@ -44,6 +44,9 @@ public class GroupEntity extends BaseEntity {
     @JoinColumn(name = "price_id")
     private PricingEntity price;
 
+    @Column(name = "photo")
+    private String photo;
+
     @ManyToOne(fetch = FetchType.LAZY)  // Lazy loading for teacher
     @JoinColumn(name = "teacher_id")
     @JsonBackReference

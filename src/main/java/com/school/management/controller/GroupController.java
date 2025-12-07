@@ -8,12 +8,18 @@ import com.school.management.persistance.AttendanceEntity;
 import com.school.management.persistance.GroupEntity;
 import com.school.management.service.group.GroupServiceImpl;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -22,6 +28,8 @@ import java.util.Set;
 @RestController
 @RequestMapping("/api/groups")
 public class GroupController {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(GroupController.class);
 
     private final GroupServiceImpl groupService;
     private final GroupMapper groupMapper;
@@ -181,6 +189,41 @@ public class GroupController {
         return ResponseEntity.ok(groupDtos);
     }
 
+    /**
+     * PHASE 3A: Upload photo pour un groupe
+     * @param id ID du groupe
+     * @param file Fichier photo
+     * @return Nom du fichier uploadé
+     */
+    @PostMapping("/{id}/photo")
+    public ResponseEntity<String> uploadGroupPhoto(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file) {
+        try {
+            String filename = groupService.uploadPhoto(id, file);
+            return ResponseEntity.ok(filename);
+        } catch (IOException e) {
+            LOGGER.error("Failed to upload photo for group {}: {}", id, e.getMessage(), e);
+            return ResponseEntity.status(500).body("Failed to upload photo: " + e.getMessage());
+        }
+    }
 
+    /**
+     * PHASE 3A: Récupère la photo d'un groupe
+     * @param id ID du groupe
+     * @return Resource contenant la photo
+     */
+    @GetMapping("/{id}/photo")
+    public ResponseEntity<Resource> getGroupPhoto(@PathVariable Long id) {
+        try {
+            Resource photo = groupService.getPhoto(id);
+            return ResponseEntity.ok()
+                    .contentType(MediaType.IMAGE_JPEG)
+                    .body(photo);
+        } catch (IOException e) {
+            LOGGER.error("Failed to get photo for group {}: {}", id, e.getMessage(), e);
+            return ResponseEntity.notFound().build();
+        }
+    }
 
 }

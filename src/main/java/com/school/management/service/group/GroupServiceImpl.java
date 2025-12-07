@@ -10,11 +10,14 @@ import com.school.management.persistance.GroupEntity;
 import com.school.management.persistance.StudentEntity;
 import com.school.management.persistance.StudentGroupEntity;
 import com.school.management.repository.*;
+import com.school.management.infrastructure.storage.FileManagementService;
 import com.school.management.service.exception.CustomServiceException;
 import com.school.management.service.interfaces.GroupService;
 import com.school.management.shared.mapper.MappingContext;
 import io.swagger.v3.core.util.ReflectionUtils;
 import org.modelmapper.ModelMapper;
+import org.springframework.core.io.Resource;
+import org.springframework.web.multipart.MultipartFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +26,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.annotation.PostConstruct;
+
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.*;
 
@@ -37,6 +42,7 @@ public class GroupServiceImpl implements GroupService {
     private final GroupSearchService groupSearchService;
     private final AttendanceRepository attendanceRepository;
     private final StudentGroupRepository studentGroupRepository;
+    private final FileManagementService fileManagementService;
 
     // PHASE 1 REFACTORING: Repositories pour MappingContext
     private final GroupTypeRepository groupTypeRepository;
@@ -56,6 +62,7 @@ public class GroupServiceImpl implements GroupService {
                             GroupSearchService groupSearchService,
                             StudentGroupRepository studentGroupRepository,
                             AttendanceRepository attendanceRepository,
+                            FileManagementService fileManagementService,
                             GroupTypeRepository groupTypeRepository,
                             LevelRepository levelRepository,
                             SubjectRepository subjectRepository,
@@ -68,6 +75,7 @@ public class GroupServiceImpl implements GroupService {
         this.groupSearchService = groupSearchService;
         this.studentGroupRepository = studentGroupRepository;
         this.attendanceRepository = attendanceRepository;
+        this.fileManagementService = fileManagementService;
         this.groupTypeRepository = groupTypeRepository;
         this.levelRepository = levelRepository;
         this.subjectRepository = subjectRepository;
@@ -215,6 +223,66 @@ public class GroupServiceImpl implements GroupService {
         unionSet.addAll(catchUpGroups);
 
         return new ArrayList<>(unionSet);
+    }
+
+    /**
+     * PHASE 3A: Upload photo pour un groupe
+     * @param groupId ID du groupe
+     * @param file Fichier photo à uploader
+     * @return Le nom du fichier uploadé
+     * @throws IOException Si erreur d'upload
+     */
+    @Transactional
+    public String uploadPhoto(Long groupId, MultipartFile file) throws IOException {
+        LOGGER.info("Uploading photo for group ID: {}", groupId);
+
+        GroupEntity group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new CustomServiceException(GROUP_NOT_FOUND + groupId));
+
+        // Supprimer l'ancienne photo si elle existe
+        if (group.getPhoto() != null && !group.getPhoto().isEmpty()) {
+            try {
+                fileManagementService.deleteFile(group.getPhoto());
+                LOGGER.debug("Deleted old photo: {}", group.getPhoto());
+            } catch (IOException e) {
+                LOGGER.warn("Failed to delete old photo: {}", group.getPhoto(), e);
+                // Continue malgré l'erreur - on veut quand même uploader la nouvelle photo
+            }
+        }
+
+        // Upload la nouvelle photo avec rollback automatique
+        FileManagementService.FileUploadResult result = fileManagementService.uploadWithRollback(file);
+
+        if (!result.isSuccess()) {
+            throw new IOException("Photo upload failed: " + result.getErrorMessage());
+        }
+
+        // Mettre à jour l'entité avec le nom du fichier
+        group.setPhoto(result.getFilename());
+        groupRepository.save(group);
+
+        LOGGER.info("Photo uploaded successfully for group ID {}: {}", groupId, result.getFilename());
+        return result.getFilename();
+    }
+
+    /**
+     * PHASE 3A: Récupère la photo d'un groupe
+     * @param groupId ID du groupe
+     * @return Resource contenant la photo
+     * @throws IOException Si erreur de lecture
+     */
+    @Transactional(readOnly = true)
+    public Resource getPhoto(Long groupId) throws IOException {
+        LOGGER.debug("Fetching photo for group ID: {}", groupId);
+
+        GroupEntity group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new CustomServiceException(GROUP_NOT_FOUND + groupId));
+
+        if (group.getPhoto() == null || group.getPhoto().isEmpty()) {
+            throw new CustomServiceException("Group " + groupId + " has no photo");
+        }
+
+        return fileManagementService.getFile(group.getPhoto());
     }
 
 }

@@ -11,12 +11,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -103,8 +106,9 @@ public class TeacherController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<TeacherEntity> updateTeacher(@PathVariable Long id, @RequestBody TeacherEntity teacher) {
-        return ResponseEntity.ok(teacherService.updateTeacher(id, teacher));
+    public ResponseEntity<TeacherDTO> updateTeacher(@PathVariable Long id, @RequestBody TeacherEntity teacher) {
+        TeacherEntity updatedTeacher = teacherService.updateTeacher(id, teacher);
+        return ResponseEntity.ok(teacherMapper.teacherToTeacherDTO(updatedTeacher));
     }
 
     @Transactional(readOnly = true)
@@ -119,6 +123,43 @@ public class TeacherController {
     public ResponseEntity<Boolean> desactivateTeacher(@PathVariable Long id) {
         teacherService.desactivateTeacher(id);
         return ResponseEntity.ok(true);
+    }
+
+    /**
+     * PHASE 3A: Upload photo pour un enseignant
+     * @param id ID de l'enseignant
+     * @param file Fichier photo
+     * @return Nom du fichier uploadé
+     */
+    @PostMapping("/{id}/photo")
+    public ResponseEntity<String> uploadTeacherPhoto(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file) {
+        try {
+            String filename = teacherService.uploadPhoto(id, file);
+            return ResponseEntity.ok(filename);
+        } catch (IOException e) {
+            LOGGER.error("Failed to upload photo for teacher {}: {}", id, e.getMessage(), e);
+            return ResponseEntity.status(500).body("Failed to upload photo: " + e.getMessage());
+        }
+    }
+
+    /**
+     * PHASE 3A: Récupère la photo d'un enseignant
+     * @param id ID de l'enseignant
+     * @return Resource contenant la photo
+     */
+    @GetMapping("/{id}/photo")
+    public ResponseEntity<Resource> getTeacherPhoto(@PathVariable Long id) {
+        try {
+            Resource photo = teacherService.getPhoto(id);
+            return ResponseEntity.ok()
+                    .contentType(MediaType.IMAGE_JPEG)
+                    .body(photo);
+        } catch (IOException e) {
+            LOGGER.error("Failed to get photo for teacher {}: {}", id, e.getMessage(), e);
+            return ResponseEntity.notFound().build();
+        }
     }
 }
 
