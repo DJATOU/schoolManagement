@@ -95,6 +95,7 @@ public class StudentController {
                 .orElseThrow(() -> new CustomServiceException("Student not found with id: " + id));
 
         // Mettre à jour l'entité existante avec les valeurs du DTO
+        studentMapper.updateStudentFromDTO(studentDto, existingStudent, studentService.getMappingContext());
 
         // Sauvegarder l'entité mise à jour
         StudentEntity updatedStudent = studentService.save(existingStudent);
@@ -271,5 +272,72 @@ public class StudentController {
         return ResponseEntity.ok(fullHistory);
     }
 
+    /**
+     * PHASE 3A: Upload photo pour un étudiant
+     * @param id ID de l'étudiant
+     * @param file Fichier photo
+     * @return Nom du fichier uploadé
+     */
+    @PostMapping("/{id}/photo")
+    public ResponseEntity<String> uploadStudentPhoto(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file) {
+        try {
+            StudentEntity student = studentService.findById(id)
+                    .orElseThrow(() -> new CustomServiceException(STUDENT_NOT_FOUND_MESSAGE + id));
+
+            // Supprimer l'ancienne photo si elle existe
+            if (student.getPhoto() != null && !student.getPhoto().isEmpty()) {
+                try {
+                    fileManagementService.deleteFile(student.getPhoto());
+                    LOGGER.debug("Deleted old photo: {}", student.getPhoto());
+                } catch (Exception e) {
+                    LOGGER.warn("Failed to delete old photo: {}", student.getPhoto(), e);
+                }
+            }
+
+            // Upload la nouvelle photo avec rollback automatique
+            FileManagementService.FileUploadResult result = fileManagementService.uploadWithRollback(file);
+
+            if (!result.isSuccess()) {
+                return ResponseEntity.status(500).body("Photo upload failed: " + result.getErrorMessage());
+            }
+
+            // Mettre à jour l'entité avec le nom du fichier
+            student.setPhoto(result.getFilename());
+            studentService.save(student);
+
+            LOGGER.info("Photo uploaded successfully for student ID {}: {}", id, result.getFilename());
+            return ResponseEntity.ok(result.getFilename());
+        } catch (Exception e) {
+            LOGGER.error("Failed to upload photo for student {}: {}", id, e.getMessage(), e);
+            return ResponseEntity.status(500).body("Failed to upload photo: " + e.getMessage());
+        }
+    }
+
+    /**
+     * PHASE 3A: Récupère la photo d'un étudiant
+     * @param id ID de l'étudiant
+     * @return Resource contenant la photo
+     */
+    @GetMapping("/{id}/photo")
+    public ResponseEntity<Resource> getStudentPhoto(@PathVariable Long id) {
+        try {
+            StudentEntity student = studentService.findById(id)
+                    .orElseThrow(() -> new CustomServiceException(STUDENT_NOT_FOUND_MESSAGE + id));
+
+            if (student.getPhoto() == null || student.getPhoto().isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            Resource photo = fileManagementService.getFile(student.getPhoto());
+            return ResponseEntity.ok()
+                    .contentType(MediaType.IMAGE_JPEG)
+                    .body(photo);
+        } catch (Exception e) {
+            LOGGER.error("Failed to get photo for student {}: {}", id, e.getMessage(), e);
+            return ResponseEntity.notFound().build();
+        }
+    }
 
 }
