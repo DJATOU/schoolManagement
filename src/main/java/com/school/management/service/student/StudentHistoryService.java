@@ -6,6 +6,7 @@ import com.school.management.dto.session.SessionHistoryDTO;
 import com.school.management.dto.student.StudentFullHistoryDTO;
 import com.school.management.persistance.*;
 import com.school.management.repository.AttendanceRepository;
+import com.school.management.repository.StudentGroupRepository;
 import com.school.management.repository.StudentRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
@@ -18,10 +19,14 @@ public class StudentHistoryService {
 
     private final StudentRepository studentRepository;
     private final AttendanceRepository attendanceRepository;
+    private final StudentGroupRepository studentGroupRepository;
 
-    public StudentHistoryService(StudentRepository studentRepository, AttendanceRepository attendanceRepository) {
+    public StudentHistoryService(StudentRepository studentRepository,
+                                AttendanceRepository attendanceRepository,
+                                StudentGroupRepository studentGroupRepository) {
         this.studentRepository = studentRepository;
         this.attendanceRepository = attendanceRepository;
+        this.studentGroupRepository = studentGroupRepository;
     }
 
     public StudentFullHistoryDTO getStudentFullHistory(Long studentId) {
@@ -90,21 +95,19 @@ public class StudentHistoryService {
         dto.setSeriesId(series.getId());
         dto.setSeriesName(series.getName());
 
-        double totalPaidForSeries = calculateTotalPaidForSeries(series, student);
-        double totalCostOfSeries = calculateTotalCostOfSeries(group);
-
-        // Statut de paiement global de la série
-        dto.setPaymentStatus(totalPaidForSeries >= totalCostOfSeries ? "Complet" : "Partiel");
-        dto.setTotalAmountPaid(totalPaidForSeries);
-        dto.setTotalCost(totalCostOfSeries);
+        // NOUVEAU: Récupérer la date d'inscription de l'étudiant au groupe
+        Date enrollmentDate = isOfficial ? getStudentEnrollmentDate(student, group) : null;
 
         // Récupérer toutes les sessions de la série
         List<SessionEntity> allSessions = series.getSessions().stream()
                 .sorted(Comparator.comparing(SessionEntity::getSessionTimeStart))
                 .toList();
 
+        // NOUVEAU: Filtrer d'abord les sessions selon la date d'inscription
+        List<SessionEntity> eligibleSessions = filterSessionsAfterEnrollment(allSessions, enrollmentDate);
+
         // 1) Filtre sessions où l'étudiant a AU MOINS un attendance OU un paiement
-        List<SessionEntity> relevantSessions = allSessions.stream()
+        List<SessionEntity> relevantSessions = eligibleSessions.stream()
                 .filter(session -> {
                     boolean hasAttendance = session.getAttendances().stream()
                             .anyMatch(a -> a.getStudent().getId().equals(student.getId()) && a.isActive());
@@ -130,6 +133,16 @@ public class StudentHistoryService {
         if (filteredSessions.isEmpty()) {
             return null;  // => la série n'apparaîtra pas dans le PDF
         }
+
+        // NOUVEAU: Calculer le coût total uniquement pour les sessions éligibles (après inscription)
+        double totalCostForStudent = calculateTotalCostForStudent(group, eligibleSessions);
+        double totalPaidForSeries = calculateTotalPaidForSeries(series, student);
+
+        // NOUVEAU: Statut de paiement basé sur les sessions auxquelles l'étudiant a droit
+        // Si l'étudiant a payé >= au coût des sessions éligibles, le paiement est complet
+        dto.setPaymentStatus(totalPaidForSeries >= totalCostForStudent ? "Complet" : "Partiel");
+        dto.setTotalAmountPaid(totalPaidForSeries);
+        dto.setTotalCost(totalCostForStudent);
 
         // 4) Construire la liste finale de SessionHistoryDTO
         List<SessionHistoryDTO> sessionDTOs = filteredSessions.stream()
@@ -206,6 +219,41 @@ public class StudentHistoryService {
     }
 
     // ===================== Helper methods ======================
+
+    /**
+     * Récupère la date d'inscription d'un étudiant à un groupe
+     * Retourne null si l'étudiant n'est pas inscrit officiellement
+     */
+    private Date getStudentEnrollmentDate(StudentEntity student, GroupEntity group) {
+        return studentGroupRepository.findByGroupIdAndStudentIdAndActiveTrue(group.getId(), student.getId())
+                .map(StudentGroupEntity::getDateAssigned)
+                .orElse(null);
+    }
+
+    /**
+     * Filtre les sessions qui sont après la date d'inscription de l'étudiant
+     */
+    private List<SessionEntity> filterSessionsAfterEnrollment(List<SessionEntity> sessions, Date enrollmentDate) {
+        if (enrollmentDate == null) {
+            return sessions; // Pas de date d'inscription = toutes les sessions
+        }
+
+        return sessions.stream()
+                .filter(session -> {
+                    Date sessionDate = session.getSessionTimeStart();
+                    return sessionDate != null && !sessionDate.before(enrollmentDate);
+                })
+                .toList();
+    }
+
+    /**
+     * Calcule le coût total pour les sessions auxquelles l'étudiant a droit (après inscription)
+     */
+    private double calculateTotalCostForStudent(GroupEntity group, List<SessionEntity> eligibleSessions) {
+        double pricePerSession = group.getPrice().getPrice();
+        return pricePerSession * eligibleSessions.size();
+    }
+
     private double calculateTotalPaidForSeries(SessionSeriesEntity series, StudentEntity student) {
         return series.getSessions().stream()
                 .flatMap(session -> session.getPaymentDetails().stream())
